@@ -1,0 +1,22 @@
+
+# Created by https://www.gitignore.io/api/visualstudiocode,elm
+# Edit at https://www.gitignore.io/?templates=visualstudiocode,elm
+
+### Elm ###
+# elm-package generated files
+elm-stuff
+# elm-repl generated files
+repl-temp-*
+
+### VisualStudioCode ###
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+### VisualStudioCode Patch ###
+# Ignore all local history of files
+.history
+
+# End of https://www.gitignore.io/api/visualstudiocode,elm
