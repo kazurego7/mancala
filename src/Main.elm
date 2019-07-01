@@ -26,7 +26,6 @@ type alias GameInitInfo =
     { playerIDs : Set PlayerID
     , pitNum : Int
     , pitInitSeedNum : Int
-    , storeInitSeedNum : Int
     }
 
 
@@ -57,7 +56,6 @@ init () =
     ( { playerIDs = Set.empty |> Set.insert "hoge" |> Set.insert "fuga"
       , pitNum = 6
       , pitInitSeedNum = 4
-      , storeInitSeedNum = 0
       }
         |> initGameInfo
     , Task.perform GameStartTime Time.now
@@ -91,8 +89,7 @@ initGameInfo gameInitInfo =
             { pit =
                 List.repeat gameInitInfo.pitNum 0
                     |> List.map (always gameInitInfo.pitInitSeedNum)
-            , store =
-                gameInitInfo.storeInitSeedNum
+            , store = 0
             }
 
         gamePlayInfo : GamePlayInfo
