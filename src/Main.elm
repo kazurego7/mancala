@@ -39,9 +39,13 @@ type alias PlayerInfo =
     }
 
 
+type alias PitNumber =
+    Int
+
+
 type alias PickedSeed =
     Maybe
-        { pitNumber : Int
+        { pitNumber : PitNumber
         , seedCount : Int
         }
 
@@ -114,6 +118,27 @@ initGamePlayInfo gameInitInfo =
             }
     in
     gamePlayInfo
+
+
+pickSeed : PitNumber -> GamePlayInfo -> GamePlayInfo
+pickSeed newPitNum gamePlayInfo =
+    case gamePlayInfo.pickedSeed of
+        Just pickedSeed ->
+            let
+                newPickedSeed : PickedSeed
+                newPickedSeed =
+                    if newPitNum == pickedSeed.pitNumber then
+                        Just { pickedSeed | seedCount = pickedSeed.seedCount + 1 }
+
+                    else
+                        Just { pickedSeed | pitNumber = newPitNum, seedCount = 1 }
+            in
+            { gamePlayInfo
+                | pickedSeed = newPickedSeed
+            }
+
+        Nothing ->
+            gamePlayInfo
 
 
 
