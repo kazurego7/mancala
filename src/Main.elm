@@ -24,8 +24,8 @@ main =
 
 type alias GameInitInfo =
     { playerIDs : Set PlayerID
-    , pitNum : Int
-    , pitInitSeedNum : Int
+    , pitCount : Int
+    , initSeedCount : Int
     }
 
 
@@ -34,9 +34,16 @@ type alias PlayerID =
 
 
 type alias PlayerInfo =
-    { pit : List Int
-    , store : Int
+    { pitSeedCounts : List Int
+    , storeSeedCount : Int
     }
+
+
+type alias PickedSeed =
+    Maybe
+        { pitNumber : Int
+        , seedCount : Int
+        }
 
 
 type alias GamePlayInfo =
@@ -44,6 +51,7 @@ type alias GamePlayInfo =
     , turnOrder : List PlayerID
     , turnCount : Int
     , turnStartTime : Time.Posix
+    , pickedSeed : PickedSeed
     }
 
 
@@ -54,10 +62,10 @@ type alias Model =
 init : () -> ( Model, Cmd Msg )
 init () =
     ( { playerIDs = Set.empty |> Set.insert "hoge" |> Set.insert "fuga"
-      , pitNum = 6
-      , pitInitSeedNum = 4
+      , pitCount = 6
+      , initSeedCount = 4
       }
-        |> initGameInfo
+        |> initGamePlayInfo
     , Task.perform GameStartTime Time.now
     )
 
@@ -81,15 +89,15 @@ update msg model =
             ( model, Cmd.none )
 
 
-initGameInfo : GameInitInfo -> GamePlayInfo
-initGameInfo gameInitInfo =
+initGamePlayInfo : GameInitInfo -> GamePlayInfo
+initGamePlayInfo gameInitInfo =
     let
         playerInitInfo : PlayerInfo
         playerInitInfo =
-            { pit =
-                List.repeat gameInitInfo.pitNum 0
-                    |> List.map (always gameInitInfo.pitInitSeedNum)
-            , store = 0
+            { pitSeedCounts =
+                List.repeat gameInitInfo.pitCount 0
+                    |> List.map (always gameInitInfo.initSeedCount)
+            , storeSeedCount = 0
             }
 
         gamePlayInfo : GamePlayInfo
@@ -102,6 +110,7 @@ initGameInfo gameInitInfo =
             , turnOrder = gameInitInfo.playerIDs |> Set.toList
             , turnCount = 1
             , turnStartTime = Time.millisToPosix 0
+            , pickedSeed = Maybe.Nothing
             }
     in
     gamePlayInfo
