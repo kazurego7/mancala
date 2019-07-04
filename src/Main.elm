@@ -146,9 +146,38 @@ initGamePlayInfo gameInitInfo =
 
 selectHoldPit : PitNumber -> GamePlayInfo -> GamePlayInfo
 selectHoldPit newSelectedPitNumber gamePlayInfo =
+    let
+        newHoldPit =
+            Just
+                { pitNumber = newSelectedPitNumber
+                , seedCount =
+                    gamePlayInfo.playerInfoTable
+                        |> Dict.get gamePlayInfo.turnPlayerID
+                        |> Maybe.andThen
+                            (\playerInfo ->
+                                playerInfo.pitSeedCounts
+                                    |> Array.get newSelectedPitNumber
+                            )
+                        |> Maybe.withDefault 0
+                }
+    in
     case gamePlayInfo.holdPit of
         Nothing ->
-            gamePlayInfo
+            let
+                updatePit : PlayerInfo -> PlayerInfo
+                updatePit playerInfo =
+                    { playerInfo
+                        | pitSeedCounts =
+                            playerInfo.pitSeedCounts
+                                |> Array.set newSelectedPitNumber 0
+                    }
+            in
+            { gamePlayInfo
+                | holdPit = newHoldPit
+                , playerInfoTable =
+                    gamePlayInfo.playerInfoTable
+                        |> Dict.update gamePlayInfo.turnPlayerID (Maybe.map updatePit)
+            }
 
         Just holdPit ->
             if newSelectedPitNumber == holdPit.pitNumber then
@@ -158,31 +187,17 @@ selectHoldPit newSelectedPitNumber gamePlayInfo =
             else
                 -- 別のpitを選ぶ
                 let
-                    newSeedCount =
-                        gamePlayInfo.playerInfoTable
-                            |> Dict.get gamePlayInfo.turnPlayerID
-                            |> Maybe.andThen
-                                (\playerInfo ->
-                                    playerInfo.pitSeedCounts
-                                        |> Array.get newSelectedPitNumber
-                                )
-                            |> Maybe.withDefault 0
-
                     updatePit : PlayerInfo -> PlayerInfo
                     updatePit playerInfo =
                         { playerInfo
                             | pitSeedCounts =
                                 playerInfo.pitSeedCounts
-                                    |> Array.set holdPit.pitNumber 0
-                                    |> Array.set newSelectedPitNumber newSeedCount
-                        }
+                                    |> Array.set holdPit.pitNumber holdPit.seedCount
+                                    --元のpitへseedを戻す処理
+                                    |> Array.set newSelectedPitNumber 0
 
-                    newHoldPit =
-                        Just
-                            { holdPit
-                                | pitNumber = newSelectedPitNumber
-                                , seedCount = newSeedCount
-                            }
+                            -- 新しいpitからseedを取る処理
+                        }
                 in
                 { gamePlayInfo
                     | holdPit = newHoldPit
@@ -247,6 +262,7 @@ sowing gamePlayInfo =
                         sowingHelper (Pit 0) nextOrderID nextGamePlayInfo
 
                 Pit pitNumber ->
+                    -- 配る先が自分の取ったpitなら飛ばす
                     let
                         isSowedToTurnPlayer =
                             sowedPlayerID == gamePlayInfo.turnPlayerID
@@ -254,6 +270,7 @@ sowing gamePlayInfo =
                         isSowedToTurnPlayerPit =
                             gamePlayInfo.holdPit |> Maybe.map (\holdPit -> pitNumber == holdPit.pitNumber) |> Maybe.withDefault False
 
+                        -- pitの次は、必ず自分のpitかstore
                         nextHoleNumber =
                             if pitNumber + 1 == gamePlayInfo.pitCount then
                                 Store
@@ -261,7 +278,6 @@ sowing gamePlayInfo =
                             else
                                 Pit (pitNumber + 1)
                     in
-                    -- 配る先が自分の取ったpitなら飛ばす
                     if isSowedToTurnPlayer && isSowedToTurnPlayerPit then
                         sowingHelper nextHoleNumber sowedPlayerID prevGamePlayInfo
 
