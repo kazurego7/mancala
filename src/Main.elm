@@ -225,6 +225,20 @@ selectHoldPit newSelectedPitNumber gamePlayInfo =
 sowing : GamePlayInfo -> GamePlayInfo
 sowing gamePlayInfo =
     case ( gamePlayInfo.holdPit, gamePlayInfo.sowedHole ) of
+        ( Just prevHoldPit, Nothing ) ->
+            let
+                -- pitの次は、必ず自分のpitかstore
+                nextHoleNumber =
+                    if prevHoldPit.sowingPitNumber + 1 == gamePlayInfo.pitCount then
+                        Store
+
+                    else
+                        Pit (prevHoldPit.sowingPitNumber + 1)
+            in
+            { gamePlayInfo
+                | sowedHole = Just { sowedPlayerID = gamePlayInfo.turnPlayerID, sowedHoleNumber = nextHoleNumber }
+            }
+
         ( Just prevHoldPit, Just prevSowedHole ) ->
             let
                 nextOrderID =
