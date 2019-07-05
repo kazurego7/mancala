@@ -24,16 +24,16 @@ main =
 -- MODEL
 
 
+type alias PlayerID =
+    String
+
+
 type alias GameInitInfo =
     { playerIDs : Set PlayerID
     , pitCount : Int
     , initSeedCount : Int
     , timeLimitForSecond : Int
     }
-
-
-type alias PlayerID =
-    String
 
 
 type alias PlayerInfo =
@@ -47,10 +47,22 @@ type alias PitNumber =
     Int
 
 
+type HoleNumber
+    = Pit PitNumber
+    | Store
+
+
 type alias HoldPit =
     Maybe
         { sowingPitNumber : PitNumber
         , seedCount : Int
+        }
+
+
+type alias SowedHole =
+    Maybe
+        { sowedPlayerID : PlayerID
+        , sowedHoleNumber : HoleNumber
         }
 
 
@@ -59,6 +71,7 @@ type alias GamePlayInfo =
     , nextOrderIDTable : Dict PlayerID PlayerID
     , pitCount : Int
     , holdPit : HoldPit
+    , sowedHole : SowedHole
     , turnPlayerID : PlayerID
     , turnCount : Int
     , turnStartTime : Time.Posix
@@ -139,7 +152,8 @@ initGamePlayInfo gameInitInfo =
     , turnCount = 1
     , turnPlayerID = playerIDs |> List.head |> Maybe.withDefault "None"
     , turnStartTime = Time.millisToPosix 0
-    , holdPit = Maybe.Nothing
+    , holdPit = Nothing
+    , sowedHole = Nothing
     , timeLimitForSecond = gameInitInfo.timeLimitForSecond
     }
 
@@ -208,95 +222,71 @@ selectHoldPit newSelectedPitNumber gamePlayInfo =
                 }
 
 
-type HoleNumber
-    = Pit PitNumber
-    | Store
-
-
-type alias IsMultiLap =
-    Bool
-
-
-sowing : ( HoleNumber, PlayerID ) -> GamePlayInfo -> ( GamePlayInfo, IsMultiLap )
-sowing ( holeNumber, sowedPlayerID ) gamePlayInfo =
-    let
-        nextOrderID =
-            gamePlayInfo.nextOrderIDTable
-                |> Dict.get sowedPlayerID
-                |> Maybe.withDefault "None"
-
-        seedCount =
-            gamePlayInfo.holdPit
-                |> Maybe.map .seedCount
-                |> Maybe.withDefault -1
-    in
-    case holeNumber of
-        -- 今storeなので、次は隣のプレイヤーのpitにsowingする
-        Store ->
+sowing : GamePlayInfo -> GamePlayInfo
+sowing gamePlayInfo =
+    case ( gamePlayInfo.holdPit, gamePlayInfo.sowedHole ) of
+        ( Just prevHoldPit, Just prevSowedHole ) ->
             let
-                addStoreSeed : PlayerInfo -> PlayerInfo
-                addStoreSeed playerInfo =
-                    { playerInfo | storeSeedCount = playerInfo.storeSeedCount + 1 }
-
-                nextGamePlayInfo =
+                nextOrderID =
+                    gamePlayInfo.nextOrderIDTable
+                        |> Dict.get prevSowedHole.sowedPlayerID
+                        |> Maybe.withDefault "None"
+            in
+            case prevSowedHole.sowedHoleNumber of
+                Store ->
+                    -- 今storeなので、次は隣のプレイヤーのpitにsowingする
+                    let
+                        addStoreSeed : PlayerInfo -> PlayerInfo
+                        addStoreSeed playerInfo =
+                            { playerInfo | storeSeedCount = playerInfo.storeSeedCount + 1 }
+                    in
                     { gamePlayInfo
                         | playerInfoTable =
                             gamePlayInfo.playerInfoTable
-                                |> Dict.update sowedPlayerID (Maybe.map addStoreSeed)
-                        , holdPit =
-                            gamePlayInfo.holdPit
-                                |> Maybe.map (\prevholdPit -> { prevholdPit | seedCount = prevholdPit.seedCount - 1 })
+                                |> Dict.update prevSowedHole.sowedPlayerID (Maybe.map addStoreSeed)
+                        , holdPit = Just { prevHoldPit | seedCount = prevHoldPit.seedCount - 1 }
+                        , sowedHole = Just { sowedPlayerID = nextOrderID, sowedHoleNumber = Pit 0 }
                     }
-            in
-            -- 最後のseedがstoreに配られるとき、multiLapになる
-            if seedCount == 1 then
-                ( nextGamePlayInfo, True )
 
-            else
-                sowing ( Pit 0, nextOrderID ) nextGamePlayInfo
+                Pit pitNumber ->
+                    let
+                        isSowedToTurnPlayer =
+                            prevSowedHole.sowedPlayerID == gamePlayInfo.turnPlayerID
 
-        Pit pitNumber ->
-            -- 配る先が自分の取ったpitなら飛ばす
-            let
-                isSowedToTurnPlayer =
-                    sowedPlayerID == gamePlayInfo.turnPlayerID
+                        isSowedToTurnPlayerPit =
+                            pitNumber == prevHoldPit.sowingPitNumber
 
-                isSowedToTurnPlayerPit =
-                    gamePlayInfo.holdPit |> Maybe.map (\holdPit -> pitNumber == holdPit.sowingPitNumber) |> Maybe.withDefault False
+                        -- pitの次は、必ず自分のpitかstore
+                        nextHoleNumber =
+                            if pitNumber + 1 == gamePlayInfo.pitCount then
+                                Store
 
-                -- pitの次は、必ず自分のpitかstore
-                nextHoleNumber =
-                    if pitNumber + 1 == gamePlayInfo.pitCount then
-                        Store
+                            else
+                                Pit (pitNumber + 1)
+                    in
+                    if isSowedToTurnPlayer && isSowedToTurnPlayerPit then
+                        -- 配る先が自分の取ったpitなら飛ばす
+                        { gamePlayInfo
+                            | sowedHole = Just { sowedPlayerID = nextOrderID, sowedHoleNumber = nextHoleNumber }
+                        }
 
                     else
-                        Pit (pitNumber + 1)
-            in
-            if isSowedToTurnPlayer && isSowedToTurnPlayerPit then
-                sowing ( nextHoleNumber, sowedPlayerID ) gamePlayInfo
-
-            else
-                let
-                    addPitSeed : PlayerInfo -> PlayerInfo
-                    addPitSeed playerInfo =
-                        { playerInfo | pitSeedCounts = playerInfo.pitSeedCounts |> Array.Extra.update pitNumber (\pitCount -> pitCount + 1) }
-
-                    nextGamePlayInfo =
+                        -- 配る先がpitなら普通に配る
+                        let
+                            addPitSeed : PlayerInfo -> PlayerInfo
+                            addPitSeed playerInfo =
+                                { playerInfo | pitSeedCounts = playerInfo.pitSeedCounts |> Array.Extra.update pitNumber (\pitCount -> pitCount + 1) }
+                        in
                         { gamePlayInfo
                             | playerInfoTable =
                                 gamePlayInfo.playerInfoTable
-                                    |> Dict.update sowedPlayerID (Maybe.map addPitSeed)
-                            , holdPit =
-                                gamePlayInfo.holdPit
-                                    |> Maybe.map (\prevholdPit -> { prevholdPit | seedCount = prevholdPit.seedCount - 1 })
+                                    |> Dict.update prevSowedHole.sowedPlayerID (Maybe.map addPitSeed)
+                            , holdPit = Just { prevHoldPit | seedCount = prevHoldPit.seedCount - 1 }
+                            , sowedHole = Just { sowedPlayerID = nextOrderID, sowedHoleNumber = nextHoleNumber }
                         }
-                in
-                -- 最後のseedがpitに配られるとき、multiLapにならない
-                if seedCount == 1 then
-                    ( nextGamePlayInfo, False )
 
-                else
-                    sowing ( nextHoleNumber, nextOrderID ) nextGamePlayInfo
+        _ ->
+            gamePlayInfo
 
 
 
