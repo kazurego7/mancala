@@ -4,7 +4,8 @@ import Array exposing (Array)
 import Array.Extra
 import Browser
 import Dict exposing (Dict)
-import Html exposing (Html, div)
+import Html exposing (Html, button, div, text)
+import List.Extra
 import Set exposing (Set)
 import Task
 import Time
@@ -28,6 +29,10 @@ type alias PlayerID =
     String
 
 
+defaultPlayerID =
+    "NoID"
+
+
 type alias GameInitInfo =
     { playerIDs : Set PlayerID
     , pitCount : Int
@@ -40,6 +45,14 @@ type alias PlayerInfo =
     { playerID : PlayerID
     , pitSeedCounts : Array Int
     , storeSeedCount : Int
+    }
+
+
+defaultPlayerInfo : PlayerInfo
+defaultPlayerInfo =
+    { playerID = defaultPlayerID
+    , pitSeedCounts = Array.empty
+    , storeSeedCount = -1
     }
 
 
@@ -72,11 +85,37 @@ type alias GamePlayInfo =
     , pitCount : Int
     , holdPit : HoldPit
     , sowedHole : SowedHole
+    , myID : PlayerID
     , turnPlayerID : PlayerID
     , turnCount : Int
     , turnStartTime : Time.Posix
     , timeLimitForSecond : Int
     }
+
+
+getPlayerInfo : PlayerID -> GamePlayInfo -> PlayerInfo
+getPlayerInfo playerID gamePlayInfo =
+    gamePlayInfo.playerInfoTable
+        |> Dict.get playerID
+        |> Maybe.withDefault defaultPlayerInfo
+
+
+getNextOrderID : PlayerID -> GamePlayInfo -> PlayerID
+getNextOrderID playerID gamePlayInfo =
+    gamePlayInfo.nextOrderIDTable
+        |> Dict.get playerID
+        |> Maybe.withDefault defaultPlayerID
+
+
+getOrderedIDs : GamePlayInfo -> List PlayerID
+getOrderedIDs gamePlayInfo =
+    let
+        playerCount =
+            gamePlayInfo.playerInfoTable
+                |> Dict.size
+    in
+    List.repeat (playerCount - 1) ()
+        |> List.Extra.scanl (\_ prevPlayerID -> getNextOrderID prevPlayerID gamePlayInfo) gamePlayInfo.myID
 
 
 type alias Model =
@@ -150,7 +189,8 @@ initGamePlayInfo gameInitInfo =
         List.map2 (\playerID nextOrderID -> ( playerID, nextOrderID )) playerIDs nextOrderIDs
             |> Dict.fromList
     , turnCount = 1
-    , turnPlayerID = playerIDs |> List.head |> Maybe.withDefault "None"
+    , myID = "hoge"
+    , turnPlayerID = playerIDs |> List.head |> Maybe.withDefault defaultPlayerID
     , turnStartTime = Time.millisToPosix 0
     , holdPit = Nothing
     , sowedHole = Nothing
@@ -165,14 +205,10 @@ selectHoldPit newSelectedPitNumber gamePlayInfo =
             Just
                 { sowingPitNumber = newSelectedPitNumber
                 , seedCount =
-                    gamePlayInfo.playerInfoTable
-                        |> Dict.get gamePlayInfo.turnPlayerID
-                        |> Maybe.andThen
-                            (\playerInfo ->
-                                playerInfo.pitSeedCounts
-                                    |> Array.get newSelectedPitNumber
-                            )
-                        |> Maybe.withDefault 0
+                    getPlayerInfo gamePlayInfo.turnPlayerID gamePlayInfo
+                        |> .pitSeedCounts
+                        |> Array.get newSelectedPitNumber
+                        |> Maybe.withDefault -1
                 }
     in
     case gamePlayInfo.holdPit of
@@ -244,7 +280,7 @@ sowing gamePlayInfo =
                 nextOrderID =
                     gamePlayInfo.nextOrderIDTable
                         |> Dict.get prevSowedHole.sowedPlayerID
-                        |> Maybe.withDefault "None"
+                        |> Maybe.withDefault defaultPlayerID
             in
             case prevSowedHole.sowedHoleNumber of
                 Store ->
@@ -316,6 +352,49 @@ subscriptions model =
 -- VIEW
 
 
+viewBoardInfo : GamePlayInfo -> Html Msg
+viewBoardInfo gamePlayInfo =
+    let
+        viewPlayer : PlayerInfo -> Html Msg
+        viewPlayer playerInfo =
+            let
+                storeText =
+                    text (String.fromInt playerInfo.storeSeedCount)
+            in
+            if playerInfo.playerID == gamePlayInfo.turnPlayerID then
+                let
+                    pitButtons =
+                        playerInfo.pitSeedCounts
+                            |> Array.map String.fromInt
+                            |> Array.map (\seedCount -> button [] [ text seedCount ])
+                            |> Array.toList
+                in
+                div [] (pitButtons ++ [ storeText ])
+
+            else
+                let
+                    pitTexts =
+                        playerInfo.pitSeedCounts
+                            |> Array.map String.fromInt
+                            |> Array.map text
+                            |> Array.toList
+                in
+                div [] (pitTexts ++ [ storeText ])
+
+        turnPlayerInfo =
+            getPlayerInfo gamePlayInfo.turnPlayerID gamePlayInfo
+
+        otherPlayerInfos =
+            gamePlayInfo.playerInfoTable
+                |> Dict.remove gamePlayInfo.turnPlayerID
+                |> Dict.values
+    in
+    getOrderedIDs gamePlayInfo
+        |> List.map (\orderedID -> getPlayerInfo orderedID gamePlayInfo)
+        |> List.map viewPlayer
+        |> div []
+
+
 view : Model -> Html Msg
 view model =
-    div [] []
+    div [] [ viewBoardInfo model ]
