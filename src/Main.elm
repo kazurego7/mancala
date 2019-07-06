@@ -6,6 +6,8 @@ import Browser
 import Dict exposing (Dict)
 import Html exposing (Html, button, div, text)
 import List.Extra
+import Random
+import Random.List
 import Set exposing (Set)
 import Task
 import Time
@@ -29,6 +31,7 @@ type alias PlayerID =
     String
 
 
+defaultPlayerID : PlayerID
 defaultPlayerID =
     "NoID"
 
@@ -122,15 +125,22 @@ type alias Model =
     GamePlayInfo
 
 
+dammyGameInitInfo : GameInitInfo
+dammyGameInitInfo =
+    { playerIDs = Set.empty |> Set.insert "hoge" |> Set.insert "fuga" |> Set.insert "alice"
+    , pitCount = 6
+    , initSeedCount = 4
+    , timeLimitForSecond = 30
+    }
+
+
 init : () -> ( Model, Cmd Msg )
 init () =
-    ( { playerIDs = Set.empty |> Set.insert "hoge" |> Set.insert "fuga"
-      , pitCount = 6
-      , initSeedCount = 4
-      , timeLimitForSecond = 30
-      }
-        |> initGamePlayInfo
-    , Task.perform GameStartTime Time.now
+    ( initGamePlayInfo dammyGameInitInfo
+    , Cmd.batch
+        [ Task.perform GameStartTime Time.now
+        , Random.generate InitOrderIDs (dammyGameInitInfo.playerIDs |> Set.toList |> Random.List.shuffle)
+        ]
     )
 
 
@@ -140,6 +150,7 @@ init () =
 
 type Msg
     = GameStartTime Time.Posix
+    | InitOrderIDs (List PlayerID)
     | NoMsg
 
 
@@ -148,6 +159,34 @@ update msg model =
     case msg of
         GameStartTime posix ->
             ( { model | turnStartTime = posix }, Cmd.none )
+
+        InitOrderIDs orderIDs ->
+            let
+                -- playerIDsを先頭を後ろにやって、1つずつずらしたもの
+                nextOrderIDs =
+                    let
+                        head =
+                            orderIDs |> List.head |> Maybe.map List.singleton |> Maybe.withDefault []
+
+                        tail =
+                            orderIDs |> List.tail |> Maybe.withDefault []
+                    in
+                    tail ++ head
+
+                orderIDTable =
+                    List.map2 (\playerID nextOrderID -> ( playerID, nextOrderID )) orderIDs nextOrderIDs
+                        |> Dict.fromList
+            in
+            ( { model
+                | nextOrderIDTable = orderIDTable
+                , myID =
+                    orderIDs
+                        |> List.head
+                        |> Maybe.withDefault defaultPlayerID
+                , turnPlayerID = orderIDs |> List.head |> Maybe.withDefault defaultPlayerID
+              }
+            , Cmd.none
+            )
 
         NoMsg ->
             ( model, Cmd.none )
@@ -168,33 +207,20 @@ initGamePlayInfo gameInitInfo =
 
         playerIDs =
             gameInitInfo.playerIDs |> Set.toList
-
-        -- playerIDsを先頭を後ろにやって、1つずつずらしたもの
-        nextOrderIDs =
-            let
-                head =
-                    playerIDs |> List.head |> Maybe.map List.singleton |> Maybe.withDefault []
-
-                tail =
-                    playerIDs |> List.tail |> Maybe.withDefault []
-            in
-            tail ++ head
     in
     { playerInfoTable =
         playerIDs
             |> List.map (\playerID -> ( playerID, initPlayerInfo playerID ))
             |> Dict.fromList
     , pitCount = gameInitInfo.pitCount
-    , nextOrderIDTable =
-        List.map2 (\playerID nextOrderID -> ( playerID, nextOrderID )) playerIDs nextOrderIDs
-            |> Dict.fromList
     , turnCount = 1
-    , myID = "hoge"
-    , turnPlayerID = playerIDs |> List.head |> Maybe.withDefault defaultPlayerID
+    , timeLimitForSecond = gameInitInfo.timeLimitForSecond
+    , nextOrderIDTable = Dict.empty
+    , myID = defaultPlayerID
+    , turnPlayerID = defaultPlayerID
     , turnStartTime = Time.millisToPosix 0
     , holdPit = Nothing
     , sowedHole = Nothing
-    , timeLimitForSecond = gameInitInfo.timeLimitForSecond
     }
 
 
@@ -344,7 +370,7 @@ sowing gamePlayInfo =
 
 
 subscriptions : Model -> Sub Msg
-subscriptions model =
+subscriptions _ =
     Sub.none
 
 
@@ -380,14 +406,6 @@ viewBoardInfo gamePlayInfo =
                             |> Array.toList
                 in
                 div [] (pitTexts ++ [ storeText ])
-
-        turnPlayerInfo =
-            getPlayerInfo gamePlayInfo.turnPlayerID gamePlayInfo
-
-        otherPlayerInfos =
-            gamePlayInfo.playerInfoTable
-                |> Dict.remove gamePlayInfo.turnPlayerID
-                |> Dict.values
     in
     getOrderedIDs gamePlayInfo
         |> List.map (\orderedID -> getPlayerInfo orderedID gamePlayInfo)
