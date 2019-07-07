@@ -129,7 +129,7 @@ type alias Model =
 dammyGameInitInfo : GameInitInfo
 dammyGameInitInfo =
     { playerIDs = Set.empty |> Set.insert "hoge" |> Set.insert "fuga"
-    , pitCount = 6
+    , pitCount = 3
     , initSeedCount = 4
     , timeLimitForSecond = 30
     }
@@ -155,6 +155,7 @@ type Msg
     | SelectHoldPit PitNumber
     | Sowing
     | MoveTurn Time.Posix
+    | NextGame
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -174,6 +175,14 @@ update msg model =
 
         MoveTurn nowTime ->
             ( moveTurn nowTime model, Cmd.none )
+
+        NextGame ->
+            ( initGamePlayInfo dammyGameInitInfo
+            , Cmd.batch
+                [ Task.perform GetGameStartTime Time.now
+                , Random.generate InitOrderIDs (dammyGameInitInfo.playerIDs |> Set.toList |> Random.List.shuffle)
+                ]
+            )
 
 
 initOrderIDs : List PlayerID -> GamePlayInfo -> GamePlayInfo
@@ -557,7 +566,7 @@ view : Model -> Html Msg
 view model =
     case model.winnerID of
         Just winnerID ->
-            div [] [ text ("Game! Winner : " ++ winnerID), viewEndBoard model ]
+            div [] [ text ("Game! Winner : " ++ winnerID), viewEndBoard model, button [ onClick NextGame ] [ text "next game" ] ]
 
         Nothing ->
             div [] [ viewBoard model, viewSowingButton model ]
