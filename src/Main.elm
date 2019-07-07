@@ -4,7 +4,9 @@ import Array exposing (Array)
 import Array.Extra
 import Browser
 import Dict exposing (Dict)
-import Html exposing (Html, button, div, text)
+import Html exposing (..)
+import Html.Attributes exposing (..)
+import Html.Events exposing (..)
 import List.Extra
 import Random
 import Random.List
@@ -70,7 +72,7 @@ type HoleNumber
 
 type alias HoldPit =
     Maybe
-        { sowingPitNumber : PitNumber
+        { pitNumber : PitNumber
         , seedCount : Int
         }
 
@@ -151,7 +153,40 @@ init () =
 type Msg
     = GameStartTime Time.Posix
     | InitOrderIDs (List PlayerID)
+    | SelectHoldPit PitNumber
+    | Sowing
     | NoMsg
+
+
+initOrderIDs : List PlayerID -> GamePlayInfo -> GamePlayInfo
+initOrderIDs orderIDs gamePlayInfo =
+    let
+        -- playerIDsを先頭を後ろにやって、1つずつずらしたもの
+        nextOrderIDs =
+            let
+                head =
+                    orderIDs |> List.head |> Maybe.map List.singleton |> Maybe.withDefault []
+
+                tail =
+                    orderIDs |> List.tail |> Maybe.withDefault []
+            in
+            tail ++ head
+
+        orderIDTable =
+            List.map2 (\playerID nextOrderID -> ( playerID, nextOrderID )) orderIDs nextOrderIDs
+                |> Dict.fromList
+    in
+    { gamePlayInfo
+        | nextOrderIDTable = orderIDTable
+        , myID =
+            orderIDs
+                |> List.head
+                |> Maybe.withDefault defaultPlayerID
+        , turnPlayerID =
+            orderIDs
+                |> List.head
+                |> Maybe.withDefault defaultPlayerID
+    }
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -161,32 +196,13 @@ update msg model =
             ( { model | turnStartTime = posix }, Cmd.none )
 
         InitOrderIDs orderIDs ->
-            let
-                -- playerIDsを先頭を後ろにやって、1つずつずらしたもの
-                nextOrderIDs =
-                    let
-                        head =
-                            orderIDs |> List.head |> Maybe.map List.singleton |> Maybe.withDefault []
+            ( initOrderIDs orderIDs model, Cmd.none )
 
-                        tail =
-                            orderIDs |> List.tail |> Maybe.withDefault []
-                    in
-                    tail ++ head
+        SelectHoldPit pitNumber ->
+            ( selectHoldPit pitNumber model, Cmd.none )
 
-                orderIDTable =
-                    List.map2 (\playerID nextOrderID -> ( playerID, nextOrderID )) orderIDs nextOrderIDs
-                        |> Dict.fromList
-            in
-            ( { model
-                | nextOrderIDTable = orderIDTable
-                , myID =
-                    orderIDs
-                        |> List.head
-                        |> Maybe.withDefault defaultPlayerID
-                , turnPlayerID = orderIDs |> List.head |> Maybe.withDefault defaultPlayerID
-              }
-            , Cmd.none
-            )
+        Sowing ->
+            ( sowingAtOnce model, Cmd.none )
 
         NoMsg ->
             ( model, Cmd.none )
@@ -229,50 +245,35 @@ selectHoldPit newSelectedPitNumber gamePlayInfo =
     let
         newHoldPit =
             Just
-                { sowingPitNumber = newSelectedPitNumber
+                { pitNumber = newSelectedPitNumber
                 , seedCount =
                     getPlayerInfo gamePlayInfo.turnPlayerID gamePlayInfo
                         |> .pitSeedCounts
                         |> Array.get newSelectedPitNumber
                         |> Maybe.withDefault -1
                 }
+
+        turnPlayerInfo =
+            getPlayerInfo gamePlayInfo.turnPlayerID gamePlayInfo
+
+        selectedPitSeedCount =
+            turnPlayerInfo.pitSeedCounts
+                |> Array.get newSelectedPitNumber
+                |> Maybe.withDefault -1
     in
-    case gamePlayInfo.holdPit of
-        Nothing ->
-            --
-            let
-                updatePit : PlayerInfo -> PlayerInfo
-                updatePit playerInfo =
-                    { playerInfo
-                        | pitSeedCounts =
-                            playerInfo.pitSeedCounts
-                                -- 新しいpitからseedを取る処理
-                                |> Array.set newSelectedPitNumber 0
-                    }
-            in
-            { gamePlayInfo
-                | holdPit = newHoldPit
-                , playerInfoTable =
-                    gamePlayInfo.playerInfoTable
-                        |> Dict.update gamePlayInfo.turnPlayerID (Maybe.map updatePit)
-            }
+    if selectedPitSeedCount == 0 then
+        gamePlayInfo
 
-        Just holdPit ->
-            if newSelectedPitNumber == holdPit.sowingPitNumber then
-                -- なにもしない
-                gamePlayInfo
-
-            else
-                -- 現在選んでいるpitへseedを戻し、別のpitを選んでseedをとる
+    else
+        case gamePlayInfo.holdPit of
+            Nothing ->
                 let
+                    -- pitからseedをholdPitへ
                     updatePit : PlayerInfo -> PlayerInfo
                     updatePit playerInfo =
                         { playerInfo
                             | pitSeedCounts =
                                 playerInfo.pitSeedCounts
-                                    --元のpitへseedを戻す処理
-                                    |> Array.set holdPit.sowingPitNumber holdPit.seedCount
-                                    -- 新しいpitからseedを取る処理
                                     |> Array.set newSelectedPitNumber 0
                         }
                 in
@@ -283,24 +284,66 @@ selectHoldPit newSelectedPitNumber gamePlayInfo =
                             |> Dict.update gamePlayInfo.turnPlayerID (Maybe.map updatePit)
                 }
 
+            Just holdPit ->
+                if newSelectedPitNumber == holdPit.pitNumber then
+                    gamePlayInfo
 
-sowing : GamePlayInfo -> GamePlayInfo
-sowing gamePlayInfo =
+                else
+                    -- 現在選んでいるpitへseedを戻し、別のpitを選んでseedをholdPitへ
+                    let
+                        updatePit : PlayerInfo -> PlayerInfo
+                        updatePit playerInfo =
+                            { playerInfo
+                                | pitSeedCounts =
+                                    playerInfo.pitSeedCounts
+                                        --元のpitへseedを戻す処理
+                                        |> Array.set holdPit.pitNumber holdPit.seedCount
+                                        -- 新しいpitからseedを取る処理
+                                        |> Array.set newSelectedPitNumber 0
+                            }
+                    in
+                    { gamePlayInfo
+                        | holdPit = newHoldPit
+                        , playerInfoTable =
+                            gamePlayInfo.playerInfoTable
+                                |> Dict.update gamePlayInfo.turnPlayerID (Maybe.map updatePit)
+                    }
+
+
+sowingAtOnce : GamePlayInfo -> GamePlayInfo
+sowingAtOnce gamePlayInfo =
+    --アニメーションなしに一度にsowing
     case ( gamePlayInfo.holdPit, gamePlayInfo.sowedHole ) of
         ( Just prevHoldPit, Nothing ) ->
             let
                 -- pitの次は、必ず自分のpitかstore
                 nextHoleNumber =
-                    if prevHoldPit.sowingPitNumber + 1 == gamePlayInfo.pitCount then
+                    if prevHoldPit.pitNumber + 1 == gamePlayInfo.pitCount then
                         Store
 
                     else
-                        Pit (prevHoldPit.sowingPitNumber + 1)
+                        Pit (prevHoldPit.pitNumber + 1)
             in
             { gamePlayInfo
                 | sowedHole = Just { sowedPlayerID = gamePlayInfo.turnPlayerID, sowedHoleNumber = nextHoleNumber }
             }
+                |> sowingAtOnce
 
+        ( Just prevHoldPit, Just _ ) ->
+            if prevHoldPit.seedCount == 0 then
+                gamePlayInfo
+
+            else
+                sowingOneStep gamePlayInfo |> sowingAtOnce
+
+        _ ->
+            gamePlayInfo
+
+
+sowingOneStep : GamePlayInfo -> GamePlayInfo
+sowingOneStep gamePlayInfo =
+    --holdPitのseed一つだけsowing
+    case ( gamePlayInfo.holdPit, gamePlayInfo.sowedHole ) of
         ( Just prevHoldPit, Just prevSowedHole ) ->
             let
                 nextOrderID =
@@ -324,21 +367,21 @@ sowing gamePlayInfo =
                         , sowedHole = Just { sowedPlayerID = nextOrderID, sowedHoleNumber = Pit 0 }
                     }
 
-                Pit pitNumber ->
+                Pit sowedPitNumber ->
                     let
                         isSowedToTurnPlayer =
                             prevSowedHole.sowedPlayerID == gamePlayInfo.turnPlayerID
 
                         isSowedToTurnPlayerPit =
-                            pitNumber == prevHoldPit.sowingPitNumber
+                            sowedPitNumber == prevHoldPit.pitNumber
 
                         -- pitの次は、必ず自分のpitかstore
                         nextHoleNumber =
-                            if pitNumber + 1 == gamePlayInfo.pitCount then
+                            if sowedPitNumber + 1 == gamePlayInfo.pitCount then
                                 Store
 
                             else
-                                Pit (pitNumber + 1)
+                                Pit (sowedPitNumber + 1)
                     in
                     if isSowedToTurnPlayer && isSowedToTurnPlayerPit then
                         -- 配る先が自分の取ったpitなら飛ばす
@@ -351,7 +394,7 @@ sowing gamePlayInfo =
                         let
                             addPitSeed : PlayerInfo -> PlayerInfo
                             addPitSeed playerInfo =
-                                { playerInfo | pitSeedCounts = playerInfo.pitSeedCounts |> Array.Extra.update pitNumber (\pitCount -> pitCount + 1) }
+                                { playerInfo | pitSeedCounts = playerInfo.pitSeedCounts |> Array.Extra.update sowedPitNumber (\pitCount -> pitCount + 1) }
                         in
                         { gamePlayInfo
                             | playerInfoTable =
@@ -378,31 +421,42 @@ subscriptions _ =
 -- VIEW
 
 
-viewBoardInfo : GamePlayInfo -> Html Msg
-viewBoardInfo gamePlayInfo =
+viewBoard : GamePlayInfo -> Html Msg
+viewBoard gamePlayInfo =
     let
         viewPlayer : PlayerInfo -> Html Msg
         viewPlayer playerInfo =
             let
                 storeText =
-                    text (String.fromInt playerInfo.storeSeedCount)
+                    text ("store " ++ String.fromInt playerInfo.storeSeedCount)
             in
             if playerInfo.playerID == gamePlayInfo.turnPlayerID then
                 let
+                    viewPitButton : PitNumber -> Int -> Html Msg
+                    viewPitButton pitNumber seedCount =
+                        button [ onClick (SelectHoldPit pitNumber) ] [ text (String.concat [ "pit", String.fromInt pitNumber, " ", "seed", String.fromInt seedCount, " " ]) ]
+
                     pitButtons =
                         playerInfo.pitSeedCounts
-                            |> Array.map String.fromInt
-                            |> Array.map (\seedCount -> button [] [ text seedCount ])
+                            |> Array.indexedMap viewPitButton
                             |> Array.toList
                 in
-                div [] (pitButtons ++ [ storeText ])
+                case gamePlayInfo.holdPit of
+                    Just holdPit ->
+                        let
+                            holdPitText =
+                                text ("hold pit" ++ String.fromInt holdPit.pitNumber ++ " " ++ String.fromInt holdPit.seedCount)
+                        in
+                        div [] (pitButtons ++ [ storeText, text " ", holdPitText ])
+
+                    Nothing ->
+                        div [] (pitButtons ++ [ storeText ])
 
             else
                 let
                     pitTexts =
                         playerInfo.pitSeedCounts
-                            |> Array.map String.fromInt
-                            |> Array.map text
+                            |> Array.indexedMap (\pitNumber seedCount -> text (String.concat [ "pit", String.fromInt pitNumber, " ", "seed", String.fromInt seedCount ]))
                             |> Array.toList
                 in
                 div [] (pitTexts ++ [ storeText ])
@@ -413,6 +467,20 @@ viewBoardInfo gamePlayInfo =
         |> div []
 
 
+viewSowingButton : Model -> Html Msg
+viewSowingButton model =
+    let
+        isHidden =
+            case model.holdPit of
+                Nothing ->
+                    True
+
+                Just _ ->
+                    False
+    in
+    button [ hidden isHidden, onClick Sowing ] [ text "sowing" ]
+
+
 view : Model -> Html Msg
 view model =
-    div [] [ viewBoardInfo model ]
+    div [] [ viewBoard model, viewSowingButton model ]
