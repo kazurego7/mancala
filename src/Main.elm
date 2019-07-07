@@ -129,7 +129,7 @@ type alias Model =
 
 dammyGameInitInfo : GameInitInfo
 dammyGameInitInfo =
-    { playerIDs = Set.empty |> Set.insert "hoge" |> Set.insert "fuga" |> Set.insert "alice"
+    { playerIDs = Set.empty |> Set.insert "hoge" |> Set.insert "fuga"
     , pitCount = 6
     , initSeedCount = 4
     , timeLimitForSecond = 30
@@ -170,7 +170,7 @@ update msg model =
             ( selectHoldPit pitNumber model, Cmd.none )
 
         Sowing ->
-            ( sowingAtOnce model, Cmd.none )
+            ( sowingAtOnce model |> moveTurnOrMultiLap, Cmd.none )
 
 
 initOrderIDs : List PlayerID -> GamePlayInfo -> GamePlayInfo
@@ -329,10 +329,7 @@ sowingAtOnce gamePlayInfo =
         ( Just prevHoldPit, Just _ ) ->
             if prevHoldPit.seedCount == 0 then
                 -- sowing終了
-                { gamePlayInfo
-                    | holdPit = Nothing
-                    , sowedHole = Nothing
-                }
+                gamePlayInfo
 
             else
                 -- sowingつづける
@@ -409,6 +406,37 @@ sowingOneStep gamePlayInfo =
             gamePlayInfo
 
 
+moveTurnOrMultiLap : GamePlayInfo -> GamePlayInfo
+moveTurnOrMultiLap gamePlayInfo =
+    let
+        isMultiLap =
+            case gamePlayInfo.sowedHole of
+                Just sowedHole ->
+                    case sowedHole.sowedHoleNumber of
+                        Store ->
+                            True
+
+                        Pit _ ->
+                            False
+
+                Nothing ->
+                    False
+
+        ( nextTurnPlayerID, nextTurnCount ) =
+            if isMultiLap then
+                ( gamePlayInfo.turnPlayerID, gamePlayInfo.turnCount )
+
+            else
+                ( getNextOrderID gamePlayInfo.turnPlayerID gamePlayInfo, gamePlayInfo.turnCount + 1 )
+    in
+    { gamePlayInfo
+        | holdPit = Nothing
+        , sowedHole = Nothing
+        , turnPlayerID = nextTurnPlayerID
+        , turnCount = nextTurnCount
+    }
+
+
 
 -- SUBSCRIPTIONS
 
@@ -428,14 +456,17 @@ viewBoard gamePlayInfo =
         viewPlayer : PlayerInfo -> Html Msg
         viewPlayer playerInfo =
             let
+                playerIDText =
+                    text ("[playerID " ++ playerInfo.playerID ++ "] ")
+
                 storeText =
-                    text ("store " ++ String.fromInt playerInfo.storeSeedCount)
+                    text ("[store " ++ String.fromInt playerInfo.storeSeedCount ++ "] ")
             in
             if playerInfo.playerID == gamePlayInfo.turnPlayerID then
                 let
                     viewPitButton : PitNumber -> Int -> Html Msg
                     viewPitButton pitNumber seedCount =
-                        button [ onClick (SelectHoldPit pitNumber) ] [ text (String.concat [ String.fromInt seedCount, " " ]) ]
+                        button [ onClick (SelectHoldPit pitNumber) ] [ text (String.fromInt seedCount ++ " ") ]
 
                     pitButtons =
                         playerInfo.pitSeedCounts
@@ -446,21 +477,21 @@ viewBoard gamePlayInfo =
                     Just holdPit ->
                         let
                             holdPitText =
-                                text ("hold pit" ++ String.fromInt holdPit.pitNumber ++ " " ++ String.fromInt holdPit.seedCount)
+                                text ("[hold pit" ++ String.fromInt holdPit.pitNumber ++ " " ++ String.fromInt holdPit.seedCount ++ "] ")
                         in
-                        div [] (pitButtons ++ [ storeText, text " ", holdPitText ])
+                        div [] (playerIDText :: pitButtons ++ [ storeText, text " ", holdPitText ])
 
                     Nothing ->
-                        div [] (pitButtons ++ [ storeText ])
+                        div [] (playerIDText :: pitButtons ++ [ storeText ])
 
             else
                 let
                     pitTexts =
                         playerInfo.pitSeedCounts
-                            |> Array.indexedMap (\pitNumber seedCount -> text (String.concat [ String.fromInt seedCount, " " ]))
+                            |> Array.map (\seedCount -> text (String.concat [ "[" ++ String.fromInt seedCount, "] " ]))
                             |> Array.toList
                 in
-                div [] (pitTexts ++ [ storeText ])
+                div [] (playerIDText :: pitTexts ++ [ storeText ])
     in
     getOrderedIDs gamePlayInfo
         |> List.map (\orderedID -> getPlayerInfo orderedID gamePlayInfo)
