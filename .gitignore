@@ -7,9 +7,6 @@
 elm-stuff
 # elm-repl generated files
 repl-temp-*
-# elm-make generated files
-index.html
-index.js
 
 ### VisualStudioCode ###
 .vscode/*
