@@ -155,6 +155,8 @@ type Msg
     | InitOrderIDs (List PlayerID)
     | SelectHoldPit PitNumber
     | Sowing
+    | MoveTurnOrMultiLap Time.Posix
+    | GameEnd
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -170,7 +172,13 @@ update msg model =
             ( selectHoldPit pitNumber model, Cmd.none )
 
         Sowing ->
-            ( sowingAtOnce model |> moveTurnOrMultiLap, Cmd.none )
+            ( sowingAtOnce model, Task.perform MoveTurnOrMultiLap Time.now )
+
+        MoveTurnOrMultiLap nowTime ->
+            ( moveTurnOrMultiLap nowTime model, Cmd.none )
+
+        GameEnd ->
+            ( model, Cmd.none )
 
 
 initOrderIDs : List PlayerID -> GamePlayInfo -> GamePlayInfo
@@ -406,35 +414,31 @@ sowingOneStep gamePlayInfo =
             gamePlayInfo
 
 
-moveTurnOrMultiLap : GamePlayInfo -> GamePlayInfo
-moveTurnOrMultiLap gamePlayInfo =
-    let
-        isMultiLap =
-            case gamePlayInfo.sowedHole of
-                Just sowedHole ->
-                    case sowedHole.sowedHoleNumber of
-                        Store ->
-                            True
+moveTurnOrMultiLap : Time.Posix -> GamePlayInfo -> GamePlayInfo
+moveTurnOrMultiLap nowTime gamePlayInfo =
+    case gamePlayInfo.sowedHole of
+        Just sowedHole ->
+            case sowedHole.sowedHoleNumber of
+                Store ->
+                    -- 最後に配ったのがstoreならmulti lap
+                    { gamePlayInfo
+                        | holdPit = Nothing
+                        , sowedHole = Nothing
+                        , turnStartTime = nowTime
+                    }
 
-                        Pit _ ->
-                            False
+                Pit _ ->
+                    -- 最後に配ったのがpitならターン交代
+                    { gamePlayInfo
+                        | holdPit = Nothing
+                        , sowedHole = Nothing
+                        , turnPlayerID = getNextOrderID gamePlayInfo.turnPlayerID gamePlayInfo
+                        , turnCount = gamePlayInfo.turnCount + 1
+                        , turnStartTime = nowTime
+                    }
 
-                Nothing ->
-                    False
-
-        ( nextTurnPlayerID, nextTurnCount ) =
-            if isMultiLap then
-                ( gamePlayInfo.turnPlayerID, gamePlayInfo.turnCount )
-
-            else
-                ( getNextOrderID gamePlayInfo.turnPlayerID gamePlayInfo, gamePlayInfo.turnCount + 1 )
-    in
-    { gamePlayInfo
-        | holdPit = Nothing
-        , sowedHole = Nothing
-        , turnPlayerID = nextTurnPlayerID
-        , turnCount = nextTurnCount
-    }
+        Nothing ->
+            gamePlayInfo
 
 
 
