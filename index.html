@@ -5145,8 +5145,8 @@ var author$project$Main$dammyGameInitInfo = {
 	pitCount: 3,
 	playerIDs: A2(
 		elm$core$Set$insert,
-		'fuga',
-		A2(elm$core$Set$insert, 'hoge', elm$core$Set$empty)),
+		'bar',
+		A2(elm$core$Set$insert, 'foo', elm$core$Set$empty)),
 	timeLimitForSecond: 30
 };
 var author$project$Main$defaultPlayerID = 'NoID';
@@ -5438,8 +5438,8 @@ var author$project$Main$initGamePlayInfo = function (gameInitInfo) {
 		};
 	};
 	return {
+		cliantID: author$project$Main$defaultPlayerID,
 		holdPit: elm$core$Maybe$Nothing,
-		myID: author$project$Main$defaultPlayerID,
 		nextOrderIDTable: elm$core$Dict$empty,
 		pitCount: gameInitInfo.pitCount,
 		playerInfoTable: elm$core$Dict$fromList(
@@ -6258,7 +6258,7 @@ var author$project$Main$initOrderIDs = F2(
 		return _Utils_update(
 			gamePlayInfo,
 			{
-				myID: A2(
+				cliantID: A2(
 					elm$core$Maybe$withDefault,
 					author$project$Main$defaultPlayerID,
 					elm$core$List$head(orderIDs)),
@@ -6336,7 +6336,7 @@ var author$project$Main$moveTurn = F2(
 			A2(
 				elm$core$Maybe$map,
 				function ($) {
-					return $.sowedHoleNumber;
+					return $.holeNumber;
 				},
 				gamePlayInfo.sowedHole));
 		if (turnPlayerIsWin) {
@@ -6871,8 +6871,8 @@ var author$project$Main$sowingOneStep = function (gamePlayInfo) {
 	if ((_n0.a.$ === 'Just') && (_n0.b.$ === 'Just')) {
 		var holdPit = _n0.a.a;
 		var prevSowedHole = _n0.b.a;
-		var sowedHoleNumber = function () {
-			var _n3 = prevSowedHole.sowedHoleNumber;
+		var sowingHoleNumber = function () {
+			var _n3 = prevSowedHole.holeNumber;
 			if (_n3.$ === 'Store') {
 				return author$project$Main$Pit(0);
 			} else {
@@ -6880,7 +6880,7 @@ var author$project$Main$sowingOneStep = function (gamePlayInfo) {
 				return _Utils_eq(pitNumber + 1, gamePlayInfo.pitCount) ? author$project$Main$Store : author$project$Main$Pit(pitNumber + 1);
 			}
 		}();
-		if (sowedHoleNumber.$ === 'Store') {
+		if (sowingHoleNumber.$ === 'Store') {
 			var addStoreSeed = function (playerInfo) {
 				return _Utils_update(
 					playerInfo,
@@ -6895,33 +6895,33 @@ var author$project$Main$sowingOneStep = function (gamePlayInfo) {
 							{seedCount: holdPit.seedCount - 1})),
 					playerInfoTable: A3(
 						elm$core$Dict$update,
-						prevSowedHole.sowedPlayerID,
+						prevSowedHole.playerID,
 						elm$core$Maybe$map(addStoreSeed),
 						gamePlayInfo.playerInfoTable),
 					sowedHole: elm$core$Maybe$Just(
-						{sowedHoleNumber: author$project$Main$Store, sowedPlayerID: prevSowedHole.sowedPlayerID})
+						{holeNumber: author$project$Main$Store, playerID: prevSowedHole.playerID})
 				});
 		} else {
-			var sowedPitNumber = sowedHoleNumber.a;
-			var sowedPlayerID = function () {
-				var _n2 = prevSowedHole.sowedHoleNumber;
+			var sowingPitNumber = sowingHoleNumber.a;
+			var sowingPlayerID = function () {
+				var _n2 = prevSowedHole.holeNumber;
 				if (_n2.$ === 'Store') {
 					return A2(
 						elm$core$Maybe$withDefault,
 						author$project$Main$defaultPlayerID,
-						A2(elm$core$Dict$get, prevSowedHole.sowedPlayerID, gamePlayInfo.nextOrderIDTable));
+						A2(elm$core$Dict$get, prevSowedHole.playerID, gamePlayInfo.nextOrderIDTable));
 				} else {
-					return prevSowedHole.sowedPlayerID;
+					return prevSowedHole.playerID;
 				}
 			}();
-			var isSowedToTurnPlayerPit = _Utils_eq(sowedPitNumber, holdPit.pitNumber);
-			var isSowedToTurnPlayer = _Utils_eq(sowedPlayerID, gamePlayInfo.turnPlayerID);
+			var isSowedToTurnPlayerPit = _Utils_eq(sowingPitNumber, holdPit.pitNumber);
+			var isSowedToTurnPlayer = _Utils_eq(sowingPlayerID, gamePlayInfo.turnPlayerID);
 			if (isSowedToTurnPlayer && isSowedToTurnPlayerPit) {
 				return _Utils_update(
 					gamePlayInfo,
 					{
 						sowedHole: elm$core$Maybe$Just(
-							{sowedHoleNumber: sowedHoleNumber, sowedPlayerID: sowedPlayerID})
+							{holeNumber: sowingHoleNumber, playerID: sowingPlayerID})
 					});
 			} else {
 				var addPitSeed = function (playerInfo) {
@@ -6930,7 +6930,7 @@ var author$project$Main$sowingOneStep = function (gamePlayInfo) {
 						{
 							pitSeedCounts: A3(
 								elm_community$array_extra$Array$Extra$update,
-								sowedPitNumber,
+								sowingPitNumber,
 								function (pitCount) {
 									return pitCount + 1;
 								},
@@ -6946,11 +6946,11 @@ var author$project$Main$sowingOneStep = function (gamePlayInfo) {
 								{seedCount: holdPit.seedCount - 1})),
 						playerInfoTable: A3(
 							elm$core$Dict$update,
-							sowedPlayerID,
+							sowingPlayerID,
 							elm$core$Maybe$map(addPitSeed),
 							gamePlayInfo.playerInfoTable),
 						sowedHole: elm$core$Maybe$Just(
-							{sowedHoleNumber: sowedHoleNumber, sowedPlayerID: sowedPlayerID})
+							{holeNumber: sowingHoleNumber, playerID: sowingPlayerID})
 					});
 			}
 		}
@@ -6970,8 +6970,8 @@ var author$project$Main$sowingAtOnce = function (gamePlayInfo) {
 					{
 						sowedHole: elm$core$Maybe$Just(
 							{
-								sowedHoleNumber: author$project$Main$Pit(holdPit.pitNumber),
-								sowedPlayerID: gamePlayInfo.turnPlayerID
+								holeNumber: author$project$Main$Pit(holdPit.pitNumber),
+								playerID: gamePlayInfo.turnPlayerID
 							})
 					}));
 		} else {
@@ -7082,7 +7082,7 @@ var author$project$Main$getOrderedIDs = function (gamePlayInfo) {
 			function (_n0, prevPlayerID) {
 				return A2(author$project$Main$getNextOrderID, prevPlayerID, gamePlayInfo);
 			}),
-		gamePlayInfo.myID,
+		gamePlayInfo.cliantID,
 		A2(elm$core$List$repeat, playerCount - 1, _Utils_Tuple0));
 };
 var elm$core$Elm$JsArray$foldl = _JsArray_foldl;
@@ -7151,6 +7151,33 @@ var elm$core$Array$map = F2(
 var elm$core$String$concat = function (strings) {
 	return A2(elm$core$String$join, '', strings);
 };
+var elm$core$String$cons = _String_cons;
+var elm$core$String$fromChar = function (_char) {
+	return A2(elm$core$String$cons, _char, '');
+};
+var elm$core$String$length = _String_length;
+var elm$core$Bitwise$shiftRightBy = _Bitwise_shiftRightBy;
+var elm$core$String$repeatHelp = F3(
+	function (n, chunk, result) {
+		return (n <= 0) ? result : A3(
+			elm$core$String$repeatHelp,
+			n >> 1,
+			_Utils_ap(chunk, chunk),
+			(!(n & 1)) ? result : _Utils_ap(result, chunk));
+	});
+var elm$core$String$repeat = F2(
+	function (n, chunk) {
+		return A3(elm$core$String$repeatHelp, n, chunk, '');
+	});
+var elm$core$String$padRight = F3(
+	function (n, _char, string) {
+		return _Utils_ap(
+			string,
+			A2(
+				elm$core$String$repeat,
+				n - elm$core$String$length(string),
+				elm$core$String$fromChar(_char)));
+	});
 var elm$json$Json$Decode$map = _Json_map1;
 var elm$json$Json$Decode$map2 = _Json_map2;
 var elm$json$Json$Decode$succeed = _Json_succeed;
@@ -7187,34 +7214,81 @@ var elm$html$Html$Events$onClick = function (msg) {
 		'click',
 		elm$json$Json$Decode$succeed(msg));
 };
+var elm$core$String$slice = _String_slice;
+var elm$core$String$dropLeft = F2(
+	function (n, string) {
+		return (n < 1) ? string : A3(
+			elm$core$String$slice,
+			n,
+			elm$core$String$length(string),
+			string);
+	});
+var elm_community$string_extra$String$Extra$breaker = F3(
+	function (width, string, acc) {
+		breaker:
+		while (true) {
+			if (string === '') {
+				return elm$core$List$reverse(acc);
+			} else {
+				var $temp$width = width,
+					$temp$string = A2(elm$core$String$dropLeft, width, string),
+					$temp$acc = A2(
+					elm$core$List$cons,
+					A3(elm$core$String$slice, 0, width, string),
+					acc);
+				width = $temp$width;
+				string = $temp$string;
+				acc = $temp$acc;
+				continue breaker;
+			}
+		}
+	});
+var elm_community$string_extra$String$Extra$break = F2(
+	function (width, string) {
+		return ((!width) || (string === '')) ? _List_fromArray(
+			[string]) : A3(elm_community$string_extra$String$Extra$breaker, width, string, _List_Nil);
+	});
+var elm_community$string_extra$String$Extra$wrapWith = F3(
+	function (width, separator, string) {
+		return A2(
+			elm$core$String$join,
+			separator,
+			A2(elm_community$string_extra$String$Extra$break, width, string));
+	});
 var author$project$Main$viewBoard = function (gamePlayInfo) {
 	var viewPlayer = function (playerInfo) {
 		var storeText = elm$html$Html$text(
-			'[' + (elm$core$String$fromInt(playerInfo.storeSeedCount) + '] '));
-		var playerIDText = elm$html$Html$text('[playerID ' + (playerInfo.playerID + '] '));
+			'{' + (elm$core$String$fromInt(playerInfo.storeSeedCount) + '}'));
+		var playerIDText = elm$html$Html$text(
+			A3(
+				elm$core$String$padRight,
+				20,
+				_Utils_chr('.'),
+				'playerID ' + playerInfo.playerID));
 		if (_Utils_eq(playerInfo.playerID, gamePlayInfo.turnPlayerID)) {
-			var viewPitButton = F2(
-				function (pitNumber, seedCount) {
-					return A2(
-						elm$html$Html$button,
-						_List_fromArray(
-							[
-								elm$html$Html$Events$onClick(
-								author$project$Main$SelectHoldPit(pitNumber))
-							]),
-						_List_fromArray(
-							[
-								elm$html$Html$text(
-								elm$core$String$fromInt(seedCount) + ' ')
-							]));
-				});
-			var pitButtons = elm$core$Array$toList(
-				A2(elm$core$Array$indexedMap, viewPitButton, playerInfo.pitSeedCounts));
 			var _n0 = gamePlayInfo.holdPit;
 			if (_n0.$ === 'Just') {
 				var holdPit = _n0.a;
-				var holdPitText = elm$html$Html$text(
-					'[hold ' + (elm$core$String$fromInt(holdPit.seedCount) + '] '));
+				var viewPitButtonOrHold = F2(
+					function (viewPitNumber, seedCount) {
+						return _Utils_eq(holdPit.pitNumber, viewPitNumber) ? elm$html$Html$text(
+							'[' + (elm$core$String$fromInt(holdPit.seedCount) + ']')) : A2(
+							elm$html$Html$button,
+							_List_fromArray(
+								[
+									elm$html$Html$Events$onClick(
+									author$project$Main$SelectHoldPit(viewPitNumber))
+								]),
+							_List_fromArray(
+								[
+									elm$html$Html$text(
+									elm$core$String$fromInt(seedCount))
+								]));
+					});
+				var pitButtonOrHolds = elm$core$Array$toList(
+					A2(elm$core$Array$indexedMap, viewPitButtonOrHold, playerInfo.pitSeedCounts));
+				var holdText = elm$html$Html$text(
+					' -- hold ' + elm$core$String$fromInt(holdPit.pitNumber));
 				return A2(
 					elm$html$Html$div,
 					_List_Nil,
@@ -7222,14 +7296,27 @@ var author$project$Main$viewBoard = function (gamePlayInfo) {
 						elm$core$List$cons,
 						playerIDText,
 						_Utils_ap(
-							pitButtons,
+							pitButtonOrHolds,
+							_List_fromArray(
+								[storeText, holdText]))));
+			} else {
+				var viewPitButton = F2(
+					function (pitNumber, seedCount) {
+						return A2(
+							elm$html$Html$button,
 							_List_fromArray(
 								[
-									storeText,
-									elm$html$Html$text(' '),
-									holdPitText
-								]))));
-			} else {
+									elm$html$Html$Events$onClick(
+									author$project$Main$SelectHoldPit(pitNumber))
+								]),
+							_List_fromArray(
+								[
+									elm$html$Html$text(
+									elm$core$String$fromInt(seedCount) + ' ')
+								]));
+					});
+				var pitButtons = elm$core$Array$toList(
+					A2(elm$core$Array$indexedMap, viewPitButton, playerInfo.pitSeedCounts));
 				return A2(
 					elm$html$Html$div,
 					_List_Nil,
@@ -7242,29 +7329,24 @@ var author$project$Main$viewBoard = function (gamePlayInfo) {
 								[storeText]))));
 			}
 		} else {
-			var pitTexts = elm$core$Array$toList(
-				A2(
-					elm$core$Array$map,
-					function (seedCount) {
-						return elm$html$Html$text(
-							elm$core$String$concat(
-								_List_fromArray(
-									[
-										'[' + elm$core$String$fromInt(seedCount),
-										'] '
-									])));
-					},
-					playerInfo.pitSeedCounts));
+			var pitText = elm$html$Html$text(
+				A3(
+					elm_community$string_extra$String$Extra$wrapWith,
+					3,
+					',',
+					elm$core$String$concat(
+						elm$core$Array$toList(
+							A2(
+								elm$core$Array$map,
+								function (pit) {
+									return '[' + (pit + ']');
+								},
+								A2(elm$core$Array$map, elm$core$String$fromInt, playerInfo.pitSeedCounts))))));
 			return A2(
 				elm$html$Html$div,
 				_List_Nil,
-				A2(
-					elm$core$List$cons,
-					playerIDText,
-					_Utils_ap(
-						pitTexts,
-						_List_fromArray(
-							[storeText]))));
+				_List_fromArray(
+					[playerIDText, pitText, storeText]));
 		}
 	};
 	return A2(
@@ -7284,7 +7366,7 @@ var author$project$Main$viewEndBoard = function (gamePlayInfo) {
 	var viewPlayer = function (playerInfo) {
 		var storeText = elm$html$Html$text(
 			'[' + (elm$core$String$fromInt(playerInfo.storeSeedCount) + '] '));
-		var playerIDText = elm$html$Html$text('[playerID ' + (playerInfo.playerID + '] '));
+		var playerIDText = elm$html$Html$text('playerID ' + (playerInfo.playerID + '   '));
 		var pitTexts = elm$core$Array$toList(
 			A2(
 				elm$core$Array$map,
@@ -8146,12 +8228,10 @@ var elm$browser$Debugger$Expando$seqTypeToString = F2(
 				return 'Array(' + (elm$core$String$fromInt(n) + ')');
 		}
 	});
-var elm$core$String$slice = _String_slice;
 var elm$core$String$left = F2(
 	function (n, string) {
 		return (n < 1) ? '' : A3(elm$core$String$slice, 0, n, string);
 	});
-var elm$core$String$length = _String_length;
 var elm$core$String$right = F2(
 	function (n, string) {
 		return (n < 1) ? '' : A3(
@@ -10699,14 +10779,6 @@ var elm$core$Set$foldr = F3(
 				}),
 			initialState,
 			dict);
-	});
-var elm$core$String$dropLeft = F2(
-	function (n, string) {
-		return (n < 1) ? string : A3(
-			elm$core$String$slice,
-			n,
-			elm$core$String$length(string),
-			string);
 	});
 var elm$core$String$startsWith = _String_startsWith;
 var elm$url$Url$Http = {$: 'Http'};
