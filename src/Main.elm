@@ -14,6 +14,7 @@ import Set exposing (Set)
 import String.Extra
 import Task
 import Time
+import Time.Extra
 
 
 main : Program () Model Msg
@@ -578,6 +579,15 @@ viewEndBoard gamePlayInfo =
         |> List.map (\orderedID -> getPlayerInfo orderedID gamePlayInfo)
         |> List.map viewPlayer
         |> div []
+
+
+
+-- TODO 制限時間カウンターの実装
+
+
+viewTimeCounter : GamePlayInfo -> Html Msg
+viewTimeCounter gamePlayInfo =
+    text ""
 
 
 view : Model -> Html Msg
