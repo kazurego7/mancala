@@ -93,6 +93,7 @@ type alias GamePlayInfo =
     , cliantID : PlayerID
     , turnPlayerID : PlayerID
     , turnCount : Int
+    , nowTime : Time.Posix
     , turnStartTime : Time.Posix
     , timeLimitForSecond : Int
     , winnerID : Maybe PlayerID
@@ -124,6 +125,15 @@ getOrderedIDs gamePlayInfo =
         |> List.Extra.scanl (\_ prevPlayerID -> getNextOrderID prevPlayerID gamePlayInfo) gamePlayInfo.cliantID
 
 
+getReminingTime : GamePlayInfo -> Int
+getReminingTime gamePlayInfo =
+    let
+        elapsedSecond =
+            Time.Extra.diff Time.Extra.Second Time.utc gamePlayInfo.turnStartTime gamePlayInfo.nowTime
+    in
+    gamePlayInfo.timeLimitForSecond - elapsedSecond
+
+
 type alias Model =
     GamePlayInfo
 
@@ -133,7 +143,7 @@ dammyGameInitInfo =
     { playerIDs = Set.empty |> Set.insert "foo" |> Set.insert "bar"
     , pitCount = 3
     , initSeedCount = 4
-    , timeLimitForSecond = 30
+    , timeLimitForSecond = 40
     }
 
 
@@ -152,7 +162,8 @@ init () =
 
 
 type Msg
-    = GetGameStartTime Time.Posix
+    = Tick Time.Posix
+    | GetGameStartTime Time.Posix
     | InitOrderIDs (List PlayerID)
     | SelectHoldPit PitNumber
     | Sowing
@@ -163,8 +174,11 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        Tick posix ->
+            ( { model | nowTime = posix }, Cmd.none )
+
         GetGameStartTime posix ->
-            ( { model | turnStartTime = posix }, Cmd.none )
+            ( { model | turnStartTime = posix, nowTime = posix }, Cmd.none )
 
         InitOrderIDs orderIDs ->
             ( initOrderIDs orderIDs model, Cmd.none )
@@ -244,6 +258,7 @@ initGamePlayInfo gameInitInfo =
     , nextOrderIDTable = Dict.empty
     , cliantID = defaultPlayerID
     , turnPlayerID = defaultPlayerID
+    , nowTime = Time.millisToPosix 0
     , turnStartTime = Time.millisToPosix 0
     , holdPit = Nothing
     , sowedHole = Nothing
@@ -469,7 +484,7 @@ moveTurn nowTime gamePlayInfo =
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
-    Sub.none
+    Time.every 1000 Tick
 
 
 
@@ -542,6 +557,22 @@ viewBoard gamePlayInfo =
         |> div []
 
 
+viewReminingTimer : GamePlayInfo -> Html Msg
+viewReminingTimer gamePlayInfo =
+    let
+        reminingTime =
+            getReminingTime gamePlayInfo
+    in
+    (if reminingTime < 0 then
+        0
+
+     else
+        reminingTime
+    )
+        |> String.fromInt
+        |> text
+
+
 viewSowingButton : GamePlayInfo -> Html Msg
 viewSowingButton gamePlayInfo =
     let
@@ -581,15 +612,6 @@ viewEndBoard gamePlayInfo =
         |> div []
 
 
-
--- TODO 制限時間カウンターの実装
-
-
-viewTimeCounter : GamePlayInfo -> Html Msg
-viewTimeCounter gamePlayInfo =
-    text ""
-
-
 view : Model -> Html Msg
 view model =
     case model.winnerID of
@@ -597,4 +619,4 @@ view model =
             div [] [ text ("Game! Winner : " ++ winnerID), viewEndBoard model, button [ onClick NextGame ] [ text "next game" ] ]
 
         Nothing ->
-            div [] [ viewBoard model, viewSowingButton model ]
+            div [] [ viewBoard model, viewSowingButton model, viewReminingTimer model ]
