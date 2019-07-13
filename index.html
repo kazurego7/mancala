@@ -6445,41 +6445,6 @@ var elm$time$Time$every = F2(
 var author$project$Main$subscriptions = function (_n0) {
 	return A2(elm$time$Time$every, 1000, author$project$Main$Tick);
 };
-var author$project$Main$MoveTurn = function (a) {
-	return {$: 'MoveTurn', a: a};
-};
-var elm$core$List$head = function (list) {
-	if (list.b) {
-		var x = list.a;
-		var xs = list.b;
-		return elm$core$Maybe$Just(x);
-	} else {
-		return elm$core$Maybe$Nothing;
-	}
-};
-var elm$core$List$singleton = function (value) {
-	return _List_fromArray(
-		[value]);
-};
-var elm$core$List$tail = function (list) {
-	if (list.b) {
-		var x = list.a;
-		var xs = list.b;
-		return elm$core$Maybe$Just(xs);
-	} else {
-		return elm$core$Maybe$Nothing;
-	}
-};
-var elm$core$Maybe$map = F2(
-	function (f, maybe) {
-		if (maybe.$ === 'Just') {
-			var value = maybe.a;
-			return elm$core$Maybe$Just(
-				f(value));
-		} else {
-			return elm$core$Maybe$Nothing;
-		}
-	});
 var elm$core$Maybe$withDefault = F2(
 	function (_default, maybe) {
 		if (maybe.$ === 'Just') {
@@ -6489,48 +6454,6 @@ var elm$core$Maybe$withDefault = F2(
 			return _default;
 		}
 	});
-var author$project$Main$initOrderIDs = F2(
-	function (orderIDs, gamePlayInfo) {
-		var nextOrderIDs = function () {
-			var tail = A2(
-				elm$core$Maybe$withDefault,
-				_List_Nil,
-				elm$core$List$tail(orderIDs));
-			var head = A2(
-				elm$core$Maybe$withDefault,
-				_List_Nil,
-				A2(
-					elm$core$Maybe$map,
-					elm$core$List$singleton,
-					elm$core$List$head(orderIDs)));
-			return _Utils_ap(tail, head);
-		}();
-		var orderIDTable = elm$core$Dict$fromList(
-			A3(
-				elm$core$List$map2,
-				F2(
-					function (playerID, nextOrderID) {
-						return _Utils_Tuple2(playerID, nextOrderID);
-					}),
-				orderIDs,
-				nextOrderIDs));
-		return _Utils_update(
-			gamePlayInfo,
-			{
-				cliantID: A2(
-					elm$core$Maybe$withDefault,
-					author$project$Main$defaultPlayerID,
-					elm$core$List$head(orderIDs)),
-				nextOrderIDTable: orderIDTable,
-				turnPlayerID: A2(
-					elm$core$Maybe$withDefault,
-					author$project$Main$defaultPlayerID,
-					elm$core$List$head(orderIDs))
-			});
-	});
-var author$project$Main$Pit = function (a) {
-	return {$: 'Pit', a: a};
-};
 var author$project$Main$getNextOrderID = F2(
 	function (playerID, gamePlayInfo) {
 		return A2(
@@ -6538,1133 +6461,6 @@ var author$project$Main$getNextOrderID = F2(
 			author$project$Main$defaultPlayerID,
 			A2(elm$core$Dict$get, playerID, gamePlayInfo.nextOrderIDTable));
 	});
-var author$project$Main$defaultPlayerInfo = {pitSeedCounts: elm$core$Array$empty, playerID: author$project$Main$defaultPlayerID, storeSeedCount: -1};
-var author$project$Main$getPlayerInfo = F2(
-	function (playerID, gamePlayInfo) {
-		return A2(
-			elm$core$Maybe$withDefault,
-			author$project$Main$defaultPlayerInfo,
-			A2(elm$core$Dict$get, playerID, gamePlayInfo.playerInfoTable));
-	});
-var elm$core$Basics$not = _Basics_not;
-var elm$core$List$any = F2(
-	function (isOkay, list) {
-		any:
-		while (true) {
-			if (!list.b) {
-				return false;
-			} else {
-				var x = list.a;
-				var xs = list.b;
-				if (isOkay(x)) {
-					return true;
-				} else {
-					var $temp$isOkay = isOkay,
-						$temp$list = xs;
-					isOkay = $temp$isOkay;
-					list = $temp$list;
-					continue any;
-				}
-			}
-		}
-	});
-var elm$core$List$all = F2(
-	function (isOkay, list) {
-		return !A2(
-			elm$core$List$any,
-			A2(elm$core$Basics$composeL, elm$core$Basics$not, isOkay),
-			list);
-	});
-var author$project$Main$moveTurn = F2(
-	function (nowTime, gamePlayInfo) {
-		var turnPlayerIsWin = A2(
-			elm$core$List$all,
-			function (seedCount) {
-				return !seedCount;
-			},
-			elm$core$Array$toList(
-				A2(author$project$Main$getPlayerInfo, gamePlayInfo.turnPlayerID, gamePlayInfo).pitSeedCounts));
-		var sowedHoleNumber = A2(
-			elm$core$Maybe$withDefault,
-			author$project$Main$Pit(-1),
-			A2(
-				elm$core$Maybe$map,
-				function ($) {
-					return $.holeNumber;
-				},
-				gamePlayInfo.sowedHole));
-		if (turnPlayerIsWin) {
-			return _Utils_update(
-				gamePlayInfo,
-				{
-					holdPit: elm$core$Maybe$Nothing,
-					sowedHole: elm$core$Maybe$Nothing,
-					winnerID: elm$core$Maybe$Just(gamePlayInfo.turnPlayerID)
-				});
-		} else {
-			if (sowedHoleNumber.$ === 'Store') {
-				return _Utils_update(
-					gamePlayInfo,
-					{holdPit: elm$core$Maybe$Nothing, sowedHole: elm$core$Maybe$Nothing, turnStartTime: nowTime});
-			} else {
-				return _Utils_update(
-					gamePlayInfo,
-					{
-						holdPit: elm$core$Maybe$Nothing,
-						sowedHole: elm$core$Maybe$Nothing,
-						turnCount: gamePlayInfo.turnCount + 1,
-						turnPlayerID: A2(author$project$Main$getNextOrderID, gamePlayInfo.turnPlayerID, gamePlayInfo),
-						turnStartTime: nowTime
-					});
-			}
-		}
-	});
-var elm$core$Elm$JsArray$unsafeSet = _JsArray_unsafeSet;
-var elm$core$Array$setHelp = F4(
-	function (shift, index, value, tree) {
-		var pos = elm$core$Array$bitMask & (index >>> shift);
-		var _n0 = A2(elm$core$Elm$JsArray$unsafeGet, pos, tree);
-		if (_n0.$ === 'SubTree') {
-			var subTree = _n0.a;
-			var newSub = A4(elm$core$Array$setHelp, shift - elm$core$Array$shiftStep, index, value, subTree);
-			return A3(
-				elm$core$Elm$JsArray$unsafeSet,
-				pos,
-				elm$core$Array$SubTree(newSub),
-				tree);
-		} else {
-			var values = _n0.a;
-			var newLeaf = A3(elm$core$Elm$JsArray$unsafeSet, elm$core$Array$bitMask & index, value, values);
-			return A3(
-				elm$core$Elm$JsArray$unsafeSet,
-				pos,
-				elm$core$Array$Leaf(newLeaf),
-				tree);
-		}
-	});
-var elm$core$Array$set = F3(
-	function (index, value, array) {
-		var len = array.a;
-		var startShift = array.b;
-		var tree = array.c;
-		var tail = array.d;
-		return ((index < 0) || (_Utils_cmp(index, len) > -1)) ? array : ((_Utils_cmp(
-			index,
-			elm$core$Array$tailIndex(len)) > -1) ? A4(
-			elm$core$Array$Array_elm_builtin,
-			len,
-			startShift,
-			tree,
-			A3(elm$core$Elm$JsArray$unsafeSet, elm$core$Array$bitMask & index, value, tail)) : A4(
-			elm$core$Array$Array_elm_builtin,
-			len,
-			startShift,
-			A4(elm$core$Array$setHelp, startShift, index, value, tree),
-			tail));
-	});
-var elm$core$Dict$getMin = function (dict) {
-	getMin:
-	while (true) {
-		if ((dict.$ === 'RBNode_elm_builtin') && (dict.d.$ === 'RBNode_elm_builtin')) {
-			var left = dict.d;
-			var $temp$dict = left;
-			dict = $temp$dict;
-			continue getMin;
-		} else {
-			return dict;
-		}
-	}
-};
-var elm$core$Dict$moveRedLeft = function (dict) {
-	if (((dict.$ === 'RBNode_elm_builtin') && (dict.d.$ === 'RBNode_elm_builtin')) && (dict.e.$ === 'RBNode_elm_builtin')) {
-		if ((dict.e.d.$ === 'RBNode_elm_builtin') && (dict.e.d.a.$ === 'Red')) {
-			var clr = dict.a;
-			var k = dict.b;
-			var v = dict.c;
-			var _n1 = dict.d;
-			var lClr = _n1.a;
-			var lK = _n1.b;
-			var lV = _n1.c;
-			var lLeft = _n1.d;
-			var lRight = _n1.e;
-			var _n2 = dict.e;
-			var rClr = _n2.a;
-			var rK = _n2.b;
-			var rV = _n2.c;
-			var rLeft = _n2.d;
-			var _n3 = rLeft.a;
-			var rlK = rLeft.b;
-			var rlV = rLeft.c;
-			var rlL = rLeft.d;
-			var rlR = rLeft.e;
-			var rRight = _n2.e;
-			return A5(
-				elm$core$Dict$RBNode_elm_builtin,
-				elm$core$Dict$Red,
-				rlK,
-				rlV,
-				A5(
-					elm$core$Dict$RBNode_elm_builtin,
-					elm$core$Dict$Black,
-					k,
-					v,
-					A5(elm$core$Dict$RBNode_elm_builtin, elm$core$Dict$Red, lK, lV, lLeft, lRight),
-					rlL),
-				A5(elm$core$Dict$RBNode_elm_builtin, elm$core$Dict$Black, rK, rV, rlR, rRight));
-		} else {
-			var clr = dict.a;
-			var k = dict.b;
-			var v = dict.c;
-			var _n4 = dict.d;
-			var lClr = _n4.a;
-			var lK = _n4.b;
-			var lV = _n4.c;
-			var lLeft = _n4.d;
-			var lRight = _n4.e;
-			var _n5 = dict.e;
-			var rClr = _n5.a;
-			var rK = _n5.b;
-			var rV = _n5.c;
-			var rLeft = _n5.d;
-			var rRight = _n5.e;
-			if (clr.$ === 'Black') {
-				return A5(
-					elm$core$Dict$RBNode_elm_builtin,
-					elm$core$Dict$Black,
-					k,
-					v,
-					A5(elm$core$Dict$RBNode_elm_builtin, elm$core$Dict$Red, lK, lV, lLeft, lRight),
-					A5(elm$core$Dict$RBNode_elm_builtin, elm$core$Dict$Red, rK, rV, rLeft, rRight));
-			} else {
-				return A5(
-					elm$core$Dict$RBNode_elm_builtin,
-					elm$core$Dict$Black,
-					k,
-					v,
-					A5(elm$core$Dict$RBNode_elm_builtin, elm$core$Dict$Red, lK, lV, lLeft, lRight),
-					A5(elm$core$Dict$RBNode_elm_builtin, elm$core$Dict$Red, rK, rV, rLeft, rRight));
-			}
-		}
-	} else {
-		return dict;
-	}
-};
-var elm$core$Dict$moveRedRight = function (dict) {
-	if (((dict.$ === 'RBNode_elm_builtin') && (dict.d.$ === 'RBNode_elm_builtin')) && (dict.e.$ === 'RBNode_elm_builtin')) {
-		if ((dict.d.d.$ === 'RBNode_elm_builtin') && (dict.d.d.a.$ === 'Red')) {
-			var clr = dict.a;
-			var k = dict.b;
-			var v = dict.c;
-			var _n1 = dict.d;
-			var lClr = _n1.a;
-			var lK = _n1.b;
-			var lV = _n1.c;
-			var _n2 = _n1.d;
-			var _n3 = _n2.a;
-			var llK = _n2.b;
-			var llV = _n2.c;
-			var llLeft = _n2.d;
-			var llRight = _n2.e;
-			var lRight = _n1.e;
-			var _n4 = dict.e;
-			var rClr = _n4.a;
-			var rK = _n4.b;
-			var rV = _n4.c;
-			var rLeft = _n4.d;
-			var rRight = _n4.e;
-			return A5(
-				elm$core$Dict$RBNode_elm_builtin,
-				elm$core$Dict$Red,
-				lK,
-				lV,
-				A5(elm$core$Dict$RBNode_elm_builtin, elm$core$Dict$Black, llK, llV, llLeft, llRight),
-				A5(
-					elm$core$Dict$RBNode_elm_builtin,
-					elm$core$Dict$Black,
-					k,
-					v,
-					lRight,
-					A5(elm$core$Dict$RBNode_elm_builtin, elm$core$Dict$Red, rK, rV, rLeft, rRight)));
-		} else {
-			var clr = dict.a;
-			var k = dict.b;
-			var v = dict.c;
-			var _n5 = dict.d;
-			var lClr = _n5.a;
-			var lK = _n5.b;
-			var lV = _n5.c;
-			var lLeft = _n5.d;
-			var lRight = _n5.e;
-			var _n6 = dict.e;
-			var rClr = _n6.a;
-			var rK = _n6.b;
-			var rV = _n6.c;
-			var rLeft = _n6.d;
-			var rRight = _n6.e;
-			if (clr.$ === 'Black') {
-				return A5(
-					elm$core$Dict$RBNode_elm_builtin,
-					elm$core$Dict$Black,
-					k,
-					v,
-					A5(elm$core$Dict$RBNode_elm_builtin, elm$core$Dict$Red, lK, lV, lLeft, lRight),
-					A5(elm$core$Dict$RBNode_elm_builtin, elm$core$Dict$Red, rK, rV, rLeft, rRight));
-			} else {
-				return A5(
-					elm$core$Dict$RBNode_elm_builtin,
-					elm$core$Dict$Black,
-					k,
-					v,
-					A5(elm$core$Dict$RBNode_elm_builtin, elm$core$Dict$Red, lK, lV, lLeft, lRight),
-					A5(elm$core$Dict$RBNode_elm_builtin, elm$core$Dict$Red, rK, rV, rLeft, rRight));
-			}
-		}
-	} else {
-		return dict;
-	}
-};
-var elm$core$Dict$removeHelpPrepEQGT = F7(
-	function (targetKey, dict, color, key, value, left, right) {
-		if ((left.$ === 'RBNode_elm_builtin') && (left.a.$ === 'Red')) {
-			var _n1 = left.a;
-			var lK = left.b;
-			var lV = left.c;
-			var lLeft = left.d;
-			var lRight = left.e;
-			return A5(
-				elm$core$Dict$RBNode_elm_builtin,
-				color,
-				lK,
-				lV,
-				lLeft,
-				A5(elm$core$Dict$RBNode_elm_builtin, elm$core$Dict$Red, key, value, lRight, right));
-		} else {
-			_n2$2:
-			while (true) {
-				if ((right.$ === 'RBNode_elm_builtin') && (right.a.$ === 'Black')) {
-					if (right.d.$ === 'RBNode_elm_builtin') {
-						if (right.d.a.$ === 'Black') {
-							var _n3 = right.a;
-							var _n4 = right.d;
-							var _n5 = _n4.a;
-							return elm$core$Dict$moveRedRight(dict);
-						} else {
-							break _n2$2;
-						}
-					} else {
-						var _n6 = right.a;
-						var _n7 = right.d;
-						return elm$core$Dict$moveRedRight(dict);
-					}
-				} else {
-					break _n2$2;
-				}
-			}
-			return dict;
-		}
-	});
-var elm$core$Dict$removeMin = function (dict) {
-	if ((dict.$ === 'RBNode_elm_builtin') && (dict.d.$ === 'RBNode_elm_builtin')) {
-		var color = dict.a;
-		var key = dict.b;
-		var value = dict.c;
-		var left = dict.d;
-		var lColor = left.a;
-		var lLeft = left.d;
-		var right = dict.e;
-		if (lColor.$ === 'Black') {
-			if ((lLeft.$ === 'RBNode_elm_builtin') && (lLeft.a.$ === 'Red')) {
-				var _n3 = lLeft.a;
-				return A5(
-					elm$core$Dict$RBNode_elm_builtin,
-					color,
-					key,
-					value,
-					elm$core$Dict$removeMin(left),
-					right);
-			} else {
-				var _n4 = elm$core$Dict$moveRedLeft(dict);
-				if (_n4.$ === 'RBNode_elm_builtin') {
-					var nColor = _n4.a;
-					var nKey = _n4.b;
-					var nValue = _n4.c;
-					var nLeft = _n4.d;
-					var nRight = _n4.e;
-					return A5(
-						elm$core$Dict$balance,
-						nColor,
-						nKey,
-						nValue,
-						elm$core$Dict$removeMin(nLeft),
-						nRight);
-				} else {
-					return elm$core$Dict$RBEmpty_elm_builtin;
-				}
-			}
-		} else {
-			return A5(
-				elm$core$Dict$RBNode_elm_builtin,
-				color,
-				key,
-				value,
-				elm$core$Dict$removeMin(left),
-				right);
-		}
-	} else {
-		return elm$core$Dict$RBEmpty_elm_builtin;
-	}
-};
-var elm$core$Dict$removeHelp = F2(
-	function (targetKey, dict) {
-		if (dict.$ === 'RBEmpty_elm_builtin') {
-			return elm$core$Dict$RBEmpty_elm_builtin;
-		} else {
-			var color = dict.a;
-			var key = dict.b;
-			var value = dict.c;
-			var left = dict.d;
-			var right = dict.e;
-			if (_Utils_cmp(targetKey, key) < 0) {
-				if ((left.$ === 'RBNode_elm_builtin') && (left.a.$ === 'Black')) {
-					var _n4 = left.a;
-					var lLeft = left.d;
-					if ((lLeft.$ === 'RBNode_elm_builtin') && (lLeft.a.$ === 'Red')) {
-						var _n6 = lLeft.a;
-						return A5(
-							elm$core$Dict$RBNode_elm_builtin,
-							color,
-							key,
-							value,
-							A2(elm$core$Dict$removeHelp, targetKey, left),
-							right);
-					} else {
-						var _n7 = elm$core$Dict$moveRedLeft(dict);
-						if (_n7.$ === 'RBNode_elm_builtin') {
-							var nColor = _n7.a;
-							var nKey = _n7.b;
-							var nValue = _n7.c;
-							var nLeft = _n7.d;
-							var nRight = _n7.e;
-							return A5(
-								elm$core$Dict$balance,
-								nColor,
-								nKey,
-								nValue,
-								A2(elm$core$Dict$removeHelp, targetKey, nLeft),
-								nRight);
-						} else {
-							return elm$core$Dict$RBEmpty_elm_builtin;
-						}
-					}
-				} else {
-					return A5(
-						elm$core$Dict$RBNode_elm_builtin,
-						color,
-						key,
-						value,
-						A2(elm$core$Dict$removeHelp, targetKey, left),
-						right);
-				}
-			} else {
-				return A2(
-					elm$core$Dict$removeHelpEQGT,
-					targetKey,
-					A7(elm$core$Dict$removeHelpPrepEQGT, targetKey, dict, color, key, value, left, right));
-			}
-		}
-	});
-var elm$core$Dict$removeHelpEQGT = F2(
-	function (targetKey, dict) {
-		if (dict.$ === 'RBNode_elm_builtin') {
-			var color = dict.a;
-			var key = dict.b;
-			var value = dict.c;
-			var left = dict.d;
-			var right = dict.e;
-			if (_Utils_eq(targetKey, key)) {
-				var _n1 = elm$core$Dict$getMin(right);
-				if (_n1.$ === 'RBNode_elm_builtin') {
-					var minKey = _n1.b;
-					var minValue = _n1.c;
-					return A5(
-						elm$core$Dict$balance,
-						color,
-						minKey,
-						minValue,
-						left,
-						elm$core$Dict$removeMin(right));
-				} else {
-					return elm$core$Dict$RBEmpty_elm_builtin;
-				}
-			} else {
-				return A5(
-					elm$core$Dict$balance,
-					color,
-					key,
-					value,
-					left,
-					A2(elm$core$Dict$removeHelp, targetKey, right));
-			}
-		} else {
-			return elm$core$Dict$RBEmpty_elm_builtin;
-		}
-	});
-var elm$core$Dict$remove = F2(
-	function (key, dict) {
-		var _n0 = A2(elm$core$Dict$removeHelp, key, dict);
-		if ((_n0.$ === 'RBNode_elm_builtin') && (_n0.a.$ === 'Red')) {
-			var _n1 = _n0.a;
-			var k = _n0.b;
-			var v = _n0.c;
-			var l = _n0.d;
-			var r = _n0.e;
-			return A5(elm$core$Dict$RBNode_elm_builtin, elm$core$Dict$Black, k, v, l, r);
-		} else {
-			var x = _n0;
-			return x;
-		}
-	});
-var elm$core$Dict$update = F3(
-	function (targetKey, alter, dictionary) {
-		var _n0 = alter(
-			A2(elm$core$Dict$get, targetKey, dictionary));
-		if (_n0.$ === 'Just') {
-			var value = _n0.a;
-			return A3(elm$core$Dict$insert, targetKey, value, dictionary);
-		} else {
-			return A2(elm$core$Dict$remove, targetKey, dictionary);
-		}
-	});
-var author$project$Main$selectHoldPit = F2(
-	function (newSelectedPitNumber, gamePlayInfo) {
-		var turnPlayerInfo = A2(author$project$Main$getPlayerInfo, gamePlayInfo.turnPlayerID, gamePlayInfo);
-		var selectedPitSeedCount = A2(
-			elm$core$Maybe$withDefault,
-			-1,
-			A2(elm$core$Array$get, newSelectedPitNumber, turnPlayerInfo.pitSeedCounts));
-		var newHoldPit = elm$core$Maybe$Just(
-			{
-				pitNumber: newSelectedPitNumber,
-				seedCount: A2(
-					elm$core$Maybe$withDefault,
-					-1,
-					A2(
-						elm$core$Array$get,
-						newSelectedPitNumber,
-						A2(author$project$Main$getPlayerInfo, gamePlayInfo.turnPlayerID, gamePlayInfo).pitSeedCounts))
-			});
-		if (!selectedPitSeedCount) {
-			return gamePlayInfo;
-		} else {
-			var _n0 = gamePlayInfo.holdPit;
-			if (_n0.$ === 'Nothing') {
-				var updatePit = function (playerInfo) {
-					return _Utils_update(
-						playerInfo,
-						{
-							pitSeedCounts: A3(elm$core$Array$set, newSelectedPitNumber, 0, playerInfo.pitSeedCounts)
-						});
-				};
-				return _Utils_update(
-					gamePlayInfo,
-					{
-						holdPit: newHoldPit,
-						playerInfoTable: A3(
-							elm$core$Dict$update,
-							gamePlayInfo.turnPlayerID,
-							elm$core$Maybe$map(updatePit),
-							gamePlayInfo.playerInfoTable)
-					});
-			} else {
-				var holdPit = _n0.a;
-				if (_Utils_eq(newSelectedPitNumber, holdPit.pitNumber)) {
-					return gamePlayInfo;
-				} else {
-					var updatePit = function (playerInfo) {
-						return _Utils_update(
-							playerInfo,
-							{
-								pitSeedCounts: A3(
-									elm$core$Array$set,
-									newSelectedPitNumber,
-									0,
-									A3(elm$core$Array$set, holdPit.pitNumber, holdPit.seedCount, playerInfo.pitSeedCounts))
-							});
-					};
-					return _Utils_update(
-						gamePlayInfo,
-						{
-							holdPit: newHoldPit,
-							playerInfoTable: A3(
-								elm$core$Dict$update,
-								gamePlayInfo.turnPlayerID,
-								elm$core$Maybe$map(updatePit),
-								gamePlayInfo.playerInfoTable)
-						});
-				}
-			}
-		}
-	});
-var author$project$Main$Store = {$: 'Store'};
-var elm_community$array_extra$Array$Extra$update = F3(
-	function (n, f, a) {
-		var element = A2(elm$core$Array$get, n, a);
-		if (element.$ === 'Nothing') {
-			return a;
-		} else {
-			var element_ = element.a;
-			return A3(
-				elm$core$Array$set,
-				n,
-				f(element_),
-				a);
-		}
-	});
-var author$project$Main$sowingOneStep = function (gamePlayInfo) {
-	var _n0 = _Utils_Tuple2(gamePlayInfo.holdPit, gamePlayInfo.sowedHole);
-	if ((_n0.a.$ === 'Just') && (_n0.b.$ === 'Just')) {
-		var holdPit = _n0.a.a;
-		var prevSowedHole = _n0.b.a;
-		var sowingHoleNumber = function () {
-			var _n3 = prevSowedHole.holeNumber;
-			if (_n3.$ === 'Store') {
-				return author$project$Main$Pit(0);
-			} else {
-				var pitNumber = _n3.a;
-				return _Utils_eq(pitNumber + 1, gamePlayInfo.pitCount) ? author$project$Main$Store : author$project$Main$Pit(pitNumber + 1);
-			}
-		}();
-		if (sowingHoleNumber.$ === 'Store') {
-			var addStoreSeed = function (playerInfo) {
-				return _Utils_update(
-					playerInfo,
-					{storeSeedCount: playerInfo.storeSeedCount + 1});
-			};
-			return _Utils_update(
-				gamePlayInfo,
-				{
-					holdPit: elm$core$Maybe$Just(
-						_Utils_update(
-							holdPit,
-							{seedCount: holdPit.seedCount - 1})),
-					playerInfoTable: A3(
-						elm$core$Dict$update,
-						prevSowedHole.playerID,
-						elm$core$Maybe$map(addStoreSeed),
-						gamePlayInfo.playerInfoTable),
-					sowedHole: elm$core$Maybe$Just(
-						{holeNumber: author$project$Main$Store, playerID: prevSowedHole.playerID})
-				});
-		} else {
-			var sowingPitNumber = sowingHoleNumber.a;
-			var sowingPlayerID = function () {
-				var _n2 = prevSowedHole.holeNumber;
-				if (_n2.$ === 'Store') {
-					return A2(
-						elm$core$Maybe$withDefault,
-						author$project$Main$defaultPlayerID,
-						A2(elm$core$Dict$get, prevSowedHole.playerID, gamePlayInfo.nextOrderIDTable));
-				} else {
-					return prevSowedHole.playerID;
-				}
-			}();
-			var isSowedToTurnPlayerPit = _Utils_eq(sowingPitNumber, holdPit.pitNumber);
-			var isSowedToTurnPlayer = _Utils_eq(sowingPlayerID, gamePlayInfo.turnPlayerID);
-			if (isSowedToTurnPlayer && isSowedToTurnPlayerPit) {
-				return _Utils_update(
-					gamePlayInfo,
-					{
-						sowedHole: elm$core$Maybe$Just(
-							{holeNumber: sowingHoleNumber, playerID: sowingPlayerID})
-					});
-			} else {
-				var addPitSeed = function (playerInfo) {
-					return _Utils_update(
-						playerInfo,
-						{
-							pitSeedCounts: A3(
-								elm_community$array_extra$Array$Extra$update,
-								sowingPitNumber,
-								function (pitCount) {
-									return pitCount + 1;
-								},
-								playerInfo.pitSeedCounts)
-						});
-				};
-				return _Utils_update(
-					gamePlayInfo,
-					{
-						holdPit: elm$core$Maybe$Just(
-							_Utils_update(
-								holdPit,
-								{seedCount: holdPit.seedCount - 1})),
-						playerInfoTable: A3(
-							elm$core$Dict$update,
-							sowingPlayerID,
-							elm$core$Maybe$map(addPitSeed),
-							gamePlayInfo.playerInfoTable),
-						sowedHole: elm$core$Maybe$Just(
-							{holeNumber: sowingHoleNumber, playerID: sowingPlayerID})
-					});
-			}
-		}
-	} else {
-		return gamePlayInfo;
-	}
-};
-var author$project$Main$sowingAtOnce = function (gamePlayInfo) {
-	var _n0 = _Utils_Tuple2(gamePlayInfo.holdPit, gamePlayInfo.sowedHole);
-	if (_n0.a.$ === 'Just') {
-		if (_n0.b.$ === 'Nothing') {
-			var holdPit = _n0.a.a;
-			var _n1 = _n0.b;
-			return author$project$Main$sowingAtOnce(
-				_Utils_update(
-					gamePlayInfo,
-					{
-						sowedHole: elm$core$Maybe$Just(
-							{
-								holeNumber: author$project$Main$Pit(holdPit.pitNumber),
-								playerID: gamePlayInfo.turnPlayerID
-							})
-					}));
-		} else {
-			var holdPit = _n0.a.a;
-			return (!holdPit.seedCount) ? gamePlayInfo : author$project$Main$sowingAtOnce(
-				author$project$Main$sowingOneStep(gamePlayInfo));
-		}
-	} else {
-		return gamePlayInfo;
-	}
-};
-var elm$core$Platform$Cmd$none = elm$core$Platform$Cmd$batch(_List_Nil);
-var author$project$Main$update = F2(
-	function (msg, model) {
-		switch (msg.$) {
-			case 'Tick':
-				var posix = msg.a;
-				return _Utils_Tuple2(
-					_Utils_update(
-						model,
-						{nowTime: posix}),
-					elm$core$Platform$Cmd$none);
-			case 'GetGameStartTime':
-				var posix = msg.a;
-				return _Utils_Tuple2(
-					_Utils_update(
-						model,
-						{nowTime: posix, turnStartTime: posix}),
-					elm$core$Platform$Cmd$none);
-			case 'InitOrderIDs':
-				var orderIDs = msg.a;
-				return _Utils_Tuple2(
-					A2(author$project$Main$initOrderIDs, orderIDs, model),
-					elm$core$Platform$Cmd$none);
-			case 'SelectHoldPit':
-				var pitNumber = msg.a;
-				return _Utils_Tuple2(
-					A2(author$project$Main$selectHoldPit, pitNumber, model),
-					elm$core$Platform$Cmd$none);
-			case 'Sowing':
-				return _Utils_Tuple2(
-					author$project$Main$sowingAtOnce(model),
-					A2(elm$core$Task$perform, author$project$Main$MoveTurn, elm$time$Time$now));
-			case 'MoveTurn':
-				var nowTime = msg.a;
-				return _Utils_Tuple2(
-					A2(author$project$Main$moveTurn, nowTime, model),
-					elm$core$Platform$Cmd$none);
-			default:
-				return _Utils_Tuple2(
-					author$project$Main$initGamePlayInfo(author$project$Main$dammyGameInitInfo),
-					elm$core$Platform$Cmd$batch(
-						_List_fromArray(
-							[
-								A2(elm$core$Task$perform, author$project$Main$GetGameStartTime, elm$time$Time$now),
-								A2(
-								elm$random$Random$generate,
-								author$project$Main$InitOrderIDs,
-								elm_community$random_extra$Random$List$shuffle(
-									elm$core$Set$toList(author$project$Main$dammyGameInitInfo.playerIDs)))
-							])));
-		}
-	});
-var author$project$Main$NextGame = {$: 'NextGame'};
-var author$project$Main$SelectHoldPit = function (a) {
-	return {$: 'SelectHoldPit', a: a};
-};
-var elm$core$Dict$sizeHelp = F2(
-	function (n, dict) {
-		sizeHelp:
-		while (true) {
-			if (dict.$ === 'RBEmpty_elm_builtin') {
-				return n;
-			} else {
-				var left = dict.d;
-				var right = dict.e;
-				var $temp$n = A2(elm$core$Dict$sizeHelp, n + 1, right),
-					$temp$dict = left;
-				n = $temp$n;
-				dict = $temp$dict;
-				continue sizeHelp;
-			}
-		}
-	});
-var elm$core$Dict$size = function (dict) {
-	return A2(elm$core$Dict$sizeHelp, 0, dict);
-};
-var elm_community$list_extra$List$Extra$scanl = F3(
-	function (f, b, xs) {
-		var scan1 = F2(
-			function (x, accAcc) {
-				if (accAcc.b) {
-					var acc = accAcc.a;
-					return A2(
-						elm$core$List$cons,
-						A2(f, x, acc),
-						accAcc);
-				} else {
-					return _List_Nil;
-				}
-			});
-		return elm$core$List$reverse(
-			A3(
-				elm$core$List$foldl,
-				scan1,
-				_List_fromArray(
-					[b]),
-				xs));
-	});
-var author$project$Main$getOrderedIDs = function (gamePlayInfo) {
-	var playerCount = elm$core$Dict$size(gamePlayInfo.playerInfoTable);
-	return A3(
-		elm_community$list_extra$List$Extra$scanl,
-		F2(
-			function (_n0, prevPlayerID) {
-				return A2(author$project$Main$getNextOrderID, prevPlayerID, gamePlayInfo);
-			}),
-		gamePlayInfo.cliantID,
-		A2(elm$core$List$repeat, playerCount - 1, _Utils_Tuple0));
-};
-var elm$core$Elm$JsArray$foldl = _JsArray_foldl;
-var elm$core$Elm$JsArray$indexedMap = _JsArray_indexedMap;
-var elm$core$Array$indexedMap = F2(
-	function (func, _n0) {
-		var len = _n0.a;
-		var tree = _n0.c;
-		var tail = _n0.d;
-		var initialBuilder = {
-			nodeList: _List_Nil,
-			nodeListSize: 0,
-			tail: A3(
-				elm$core$Elm$JsArray$indexedMap,
-				func,
-				elm$core$Array$tailIndex(len),
-				tail)
-		};
-		var helper = F2(
-			function (node, builder) {
-				if (node.$ === 'SubTree') {
-					var subTree = node.a;
-					return A3(elm$core$Elm$JsArray$foldl, helper, builder, subTree);
-				} else {
-					var leaf = node.a;
-					var offset = builder.nodeListSize * elm$core$Array$branchFactor;
-					var mappedLeaf = elm$core$Array$Leaf(
-						A3(elm$core$Elm$JsArray$indexedMap, func, offset, leaf));
-					return {
-						nodeList: A2(elm$core$List$cons, mappedLeaf, builder.nodeList),
-						nodeListSize: builder.nodeListSize + 1,
-						tail: builder.tail
-					};
-				}
-			});
-		return A2(
-			elm$core$Array$builderToArray,
-			true,
-			A3(elm$core$Elm$JsArray$foldl, helper, initialBuilder, tree));
-	});
-var elm$core$Elm$JsArray$map = _JsArray_map;
-var elm$core$Array$map = F2(
-	function (func, _n0) {
-		var len = _n0.a;
-		var startShift = _n0.b;
-		var tree = _n0.c;
-		var tail = _n0.d;
-		var helper = function (node) {
-			if (node.$ === 'SubTree') {
-				var subTree = node.a;
-				return elm$core$Array$SubTree(
-					A2(elm$core$Elm$JsArray$map, helper, subTree));
-			} else {
-				var values = node.a;
-				return elm$core$Array$Leaf(
-					A2(elm$core$Elm$JsArray$map, func, values));
-			}
-		};
-		return A4(
-			elm$core$Array$Array_elm_builtin,
-			len,
-			startShift,
-			A2(elm$core$Elm$JsArray$map, helper, tree),
-			A2(elm$core$Elm$JsArray$map, func, tail));
-	});
-var elm$core$String$concat = function (strings) {
-	return A2(elm$core$String$join, '', strings);
-};
-var elm$core$String$cons = _String_cons;
-var elm$core$String$fromChar = function (_char) {
-	return A2(elm$core$String$cons, _char, '');
-};
-var elm$core$String$length = _String_length;
-var elm$core$Bitwise$shiftRightBy = _Bitwise_shiftRightBy;
-var elm$core$String$repeatHelp = F3(
-	function (n, chunk, result) {
-		return (n <= 0) ? result : A3(
-			elm$core$String$repeatHelp,
-			n >> 1,
-			_Utils_ap(chunk, chunk),
-			(!(n & 1)) ? result : _Utils_ap(result, chunk));
-	});
-var elm$core$String$repeat = F2(
-	function (n, chunk) {
-		return A3(elm$core$String$repeatHelp, n, chunk, '');
-	});
-var elm$core$String$padRight = F3(
-	function (n, _char, string) {
-		return _Utils_ap(
-			string,
-			A2(
-				elm$core$String$repeat,
-				n - elm$core$String$length(string),
-				elm$core$String$fromChar(_char)));
-	});
-var elm$json$Json$Decode$map = _Json_map1;
-var elm$json$Json$Decode$map2 = _Json_map2;
-var elm$json$Json$Decode$succeed = _Json_succeed;
-var elm$virtual_dom$VirtualDom$toHandlerInt = function (handler) {
-	switch (handler.$) {
-		case 'Normal':
-			return 0;
-		case 'MayStopPropagation':
-			return 1;
-		case 'MayPreventDefault':
-			return 2;
-		default:
-			return 3;
-	}
-};
-var elm$html$Html$button = _VirtualDom_node('button');
-var elm$html$Html$div = _VirtualDom_node('div');
-var elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
-var elm$html$Html$text = elm$virtual_dom$VirtualDom$text;
-var elm$virtual_dom$VirtualDom$Normal = function (a) {
-	return {$: 'Normal', a: a};
-};
-var elm$virtual_dom$VirtualDom$on = _VirtualDom_on;
-var elm$html$Html$Events$on = F2(
-	function (event, decoder) {
-		return A2(
-			elm$virtual_dom$VirtualDom$on,
-			event,
-			elm$virtual_dom$VirtualDom$Normal(decoder));
-	});
-var elm$html$Html$Events$onClick = function (msg) {
-	return A2(
-		elm$html$Html$Events$on,
-		'click',
-		elm$json$Json$Decode$succeed(msg));
-};
-var elm$core$String$slice = _String_slice;
-var elm$core$String$dropLeft = F2(
-	function (n, string) {
-		return (n < 1) ? string : A3(
-			elm$core$String$slice,
-			n,
-			elm$core$String$length(string),
-			string);
-	});
-var elm_community$string_extra$String$Extra$breaker = F3(
-	function (width, string, acc) {
-		breaker:
-		while (true) {
-			if (string === '') {
-				return elm$core$List$reverse(acc);
-			} else {
-				var $temp$width = width,
-					$temp$string = A2(elm$core$String$dropLeft, width, string),
-					$temp$acc = A2(
-					elm$core$List$cons,
-					A3(elm$core$String$slice, 0, width, string),
-					acc);
-				width = $temp$width;
-				string = $temp$string;
-				acc = $temp$acc;
-				continue breaker;
-			}
-		}
-	});
-var elm_community$string_extra$String$Extra$break = F2(
-	function (width, string) {
-		return ((!width) || (string === '')) ? _List_fromArray(
-			[string]) : A3(elm_community$string_extra$String$Extra$breaker, width, string, _List_Nil);
-	});
-var elm_community$string_extra$String$Extra$wrapWith = F3(
-	function (width, separator, string) {
-		return A2(
-			elm$core$String$join,
-			separator,
-			A2(elm_community$string_extra$String$Extra$break, width, string));
-	});
-var author$project$Main$viewBoard = function (gamePlayInfo) {
-	var viewPlayer = function (playerInfo) {
-		var storeText = elm$html$Html$text(
-			'{' + (elm$core$String$fromInt(playerInfo.storeSeedCount) + '}'));
-		var playerIDText = elm$html$Html$text(
-			A3(
-				elm$core$String$padRight,
-				20,
-				_Utils_chr('.'),
-				'playerID ' + playerInfo.playerID));
-		if (_Utils_eq(playerInfo.playerID, gamePlayInfo.turnPlayerID)) {
-			var _n0 = gamePlayInfo.holdPit;
-			if (_n0.$ === 'Just') {
-				var holdPit = _n0.a;
-				var viewPitButtonOrHold = F2(
-					function (viewPitNumber, seedCount) {
-						return _Utils_eq(holdPit.pitNumber, viewPitNumber) ? elm$html$Html$text(
-							'[' + (elm$core$String$fromInt(holdPit.seedCount) + ']')) : A2(
-							elm$html$Html$button,
-							_List_fromArray(
-								[
-									elm$html$Html$Events$onClick(
-									author$project$Main$SelectHoldPit(viewPitNumber))
-								]),
-							_List_fromArray(
-								[
-									elm$html$Html$text(
-									elm$core$String$fromInt(seedCount))
-								]));
-					});
-				var pitButtonOrHolds = elm$core$Array$toList(
-					A2(elm$core$Array$indexedMap, viewPitButtonOrHold, playerInfo.pitSeedCounts));
-				var holdText = elm$html$Html$text(
-					' -- hold ' + elm$core$String$fromInt(holdPit.pitNumber));
-				return A2(
-					elm$html$Html$div,
-					_List_Nil,
-					A2(
-						elm$core$List$cons,
-						playerIDText,
-						_Utils_ap(
-							pitButtonOrHolds,
-							_List_fromArray(
-								[storeText, holdText]))));
-			} else {
-				var viewPitButton = F2(
-					function (pitNumber, seedCount) {
-						return A2(
-							elm$html$Html$button,
-							_List_fromArray(
-								[
-									elm$html$Html$Events$onClick(
-									author$project$Main$SelectHoldPit(pitNumber))
-								]),
-							_List_fromArray(
-								[
-									elm$html$Html$text(
-									elm$core$String$fromInt(seedCount) + ' ')
-								]));
-					});
-				var pitButtons = elm$core$Array$toList(
-					A2(elm$core$Array$indexedMap, viewPitButton, playerInfo.pitSeedCounts));
-				return A2(
-					elm$html$Html$div,
-					_List_Nil,
-					A2(
-						elm$core$List$cons,
-						playerIDText,
-						_Utils_ap(
-							pitButtons,
-							_List_fromArray(
-								[storeText]))));
-			}
-		} else {
-			var pitText = elm$html$Html$text(
-				A3(
-					elm_community$string_extra$String$Extra$wrapWith,
-					3,
-					',',
-					elm$core$String$concat(
-						elm$core$Array$toList(
-							A2(
-								elm$core$Array$map,
-								function (pit) {
-									return '[' + (pit + ']');
-								},
-								A2(elm$core$Array$map, elm$core$String$fromInt, playerInfo.pitSeedCounts))))));
-			return A2(
-				elm$html$Html$div,
-				_List_Nil,
-				_List_fromArray(
-					[playerIDText, pitText, storeText]));
-		}
-	};
-	return A2(
-		elm$html$Html$div,
-		_List_Nil,
-		A2(
-			elm$core$List$map,
-			viewPlayer,
-			A2(
-				elm$core$List$map,
-				function (orderedID) {
-					return A2(author$project$Main$getPlayerInfo, orderedID, gamePlayInfo);
-				},
-				author$project$Main$getOrderedIDs(gamePlayInfo))));
-};
-var author$project$Main$viewEndBoard = function (gamePlayInfo) {
-	var viewPlayer = function (playerInfo) {
-		var storeText = elm$html$Html$text(
-			'[' + (elm$core$String$fromInt(playerInfo.storeSeedCount) + '] '));
-		var playerIDText = elm$html$Html$text('playerID ' + (playerInfo.playerID + '   '));
-		var pitTexts = elm$core$Array$toList(
-			A2(
-				elm$core$Array$map,
-				function (seedCount) {
-					return elm$html$Html$text(
-						elm$core$String$concat(
-							_List_fromArray(
-								[
-									'[' + elm$core$String$fromInt(seedCount),
-									'] '
-								])));
-				},
-				playerInfo.pitSeedCounts));
-		return A2(
-			elm$html$Html$div,
-			_List_Nil,
-			A2(
-				elm$core$List$cons,
-				playerIDText,
-				_Utils_ap(
-					pitTexts,
-					_List_fromArray(
-						[storeText]))));
-	};
-	return A2(
-		elm$html$Html$div,
-		_List_Nil,
-		A2(
-			elm$core$List$map,
-			viewPlayer,
-			A2(
-				elm$core$List$map,
-				function (orderedID) {
-					return A2(author$project$Main$getPlayerInfo, orderedID, gamePlayInfo);
-				},
-				author$project$Main$getOrderedIDs(gamePlayInfo))));
-};
 var elm$time$Time$utc = A2(elm$time$Time$Zone, 0, _List_Nil);
 var justinmimbs$time_extra$Time$Extra$Second = {$: 'Second'};
 var elm$core$Basics$truncate = _Basics_truncate;
@@ -8328,11 +7124,1225 @@ var author$project$Main$getReminingTime = function (gamePlayInfo) {
 	var elapsedSecond = A4(justinmimbs$time_extra$Time$Extra$diff, justinmimbs$time_extra$Time$Extra$Second, elm$time$Time$utc, gamePlayInfo.turnStartTime, gamePlayInfo.nowTime);
 	return gamePlayInfo.timeLimitForSecond - elapsedSecond;
 };
+var author$project$Main$doTimeRelatedEvents = function (gamePlayInfo) {
+	return (!author$project$Main$getReminingTime(gamePlayInfo)) ? _Utils_update(
+		gamePlayInfo,
+		{
+			holdPit: elm$core$Maybe$Nothing,
+			sowedHole: elm$core$Maybe$Nothing,
+			turnCount: gamePlayInfo.turnCount + 1,
+			turnPlayerID: A2(author$project$Main$getNextOrderID, gamePlayInfo.turnPlayerID, gamePlayInfo),
+			turnStartTime: gamePlayInfo.nowTime
+		}) : gamePlayInfo;
+};
+var elm$core$List$head = function (list) {
+	if (list.b) {
+		var x = list.a;
+		var xs = list.b;
+		return elm$core$Maybe$Just(x);
+	} else {
+		return elm$core$Maybe$Nothing;
+	}
+};
+var elm$core$List$singleton = function (value) {
+	return _List_fromArray(
+		[value]);
+};
+var elm$core$List$tail = function (list) {
+	if (list.b) {
+		var x = list.a;
+		var xs = list.b;
+		return elm$core$Maybe$Just(xs);
+	} else {
+		return elm$core$Maybe$Nothing;
+	}
+};
+var elm$core$Maybe$map = F2(
+	function (f, maybe) {
+		if (maybe.$ === 'Just') {
+			var value = maybe.a;
+			return elm$core$Maybe$Just(
+				f(value));
+		} else {
+			return elm$core$Maybe$Nothing;
+		}
+	});
+var author$project$Main$initOrderIDs = F2(
+	function (orderIDs, gamePlayInfo) {
+		var nextOrderIDs = function () {
+			var tail = A2(
+				elm$core$Maybe$withDefault,
+				_List_Nil,
+				elm$core$List$tail(orderIDs));
+			var head = A2(
+				elm$core$Maybe$withDefault,
+				_List_Nil,
+				A2(
+					elm$core$Maybe$map,
+					elm$core$List$singleton,
+					elm$core$List$head(orderIDs)));
+			return _Utils_ap(tail, head);
+		}();
+		var orderIDTable = elm$core$Dict$fromList(
+			A3(
+				elm$core$List$map2,
+				F2(
+					function (playerID, nextOrderID) {
+						return _Utils_Tuple2(playerID, nextOrderID);
+					}),
+				orderIDs,
+				nextOrderIDs));
+		return _Utils_update(
+			gamePlayInfo,
+			{
+				cliantID: A2(
+					elm$core$Maybe$withDefault,
+					author$project$Main$defaultPlayerID,
+					elm$core$List$head(orderIDs)),
+				nextOrderIDTable: orderIDTable,
+				turnPlayerID: A2(
+					elm$core$Maybe$withDefault,
+					author$project$Main$defaultPlayerID,
+					elm$core$List$head(orderIDs))
+			});
+	});
+var author$project$Main$Pit = function (a) {
+	return {$: 'Pit', a: a};
+};
+var author$project$Main$defaultPlayerInfo = {pitSeedCounts: elm$core$Array$empty, playerID: author$project$Main$defaultPlayerID, storeSeedCount: -1};
+var author$project$Main$getPlayerInfo = F2(
+	function (playerID, gamePlayInfo) {
+		return A2(
+			elm$core$Maybe$withDefault,
+			author$project$Main$defaultPlayerInfo,
+			A2(elm$core$Dict$get, playerID, gamePlayInfo.playerInfoTable));
+	});
+var elm$core$Basics$not = _Basics_not;
+var elm$core$List$any = F2(
+	function (isOkay, list) {
+		any:
+		while (true) {
+			if (!list.b) {
+				return false;
+			} else {
+				var x = list.a;
+				var xs = list.b;
+				if (isOkay(x)) {
+					return true;
+				} else {
+					var $temp$isOkay = isOkay,
+						$temp$list = xs;
+					isOkay = $temp$isOkay;
+					list = $temp$list;
+					continue any;
+				}
+			}
+		}
+	});
+var elm$core$List$all = F2(
+	function (isOkay, list) {
+		return !A2(
+			elm$core$List$any,
+			A2(elm$core$Basics$composeL, elm$core$Basics$not, isOkay),
+			list);
+	});
+var author$project$Main$moveTurn = function (gamePlayInfo) {
+	var turnPlayerIsWin = A2(
+		elm$core$List$all,
+		function (seedCount) {
+			return !seedCount;
+		},
+		elm$core$Array$toList(
+			A2(author$project$Main$getPlayerInfo, gamePlayInfo.turnPlayerID, gamePlayInfo).pitSeedCounts));
+	var sowedHoleNumber = A2(
+		elm$core$Maybe$withDefault,
+		author$project$Main$Pit(-1),
+		A2(
+			elm$core$Maybe$map,
+			function ($) {
+				return $.holeNumber;
+			},
+			gamePlayInfo.sowedHole));
+	if (turnPlayerIsWin) {
+		return _Utils_update(
+			gamePlayInfo,
+			{
+				holdPit: elm$core$Maybe$Nothing,
+				sowedHole: elm$core$Maybe$Nothing,
+				winnerID: elm$core$Maybe$Just(gamePlayInfo.turnPlayerID)
+			});
+	} else {
+		if (sowedHoleNumber.$ === 'Store') {
+			return _Utils_update(
+				gamePlayInfo,
+				{holdPit: elm$core$Maybe$Nothing, sowedHole: elm$core$Maybe$Nothing, turnStartTime: gamePlayInfo.nowTime});
+		} else {
+			return _Utils_update(
+				gamePlayInfo,
+				{
+					holdPit: elm$core$Maybe$Nothing,
+					sowedHole: elm$core$Maybe$Nothing,
+					turnCount: gamePlayInfo.turnCount + 1,
+					turnPlayerID: A2(author$project$Main$getNextOrderID, gamePlayInfo.turnPlayerID, gamePlayInfo),
+					turnStartTime: gamePlayInfo.nowTime
+				});
+		}
+	}
+};
+var elm$core$Elm$JsArray$unsafeSet = _JsArray_unsafeSet;
+var elm$core$Array$setHelp = F4(
+	function (shift, index, value, tree) {
+		var pos = elm$core$Array$bitMask & (index >>> shift);
+		var _n0 = A2(elm$core$Elm$JsArray$unsafeGet, pos, tree);
+		if (_n0.$ === 'SubTree') {
+			var subTree = _n0.a;
+			var newSub = A4(elm$core$Array$setHelp, shift - elm$core$Array$shiftStep, index, value, subTree);
+			return A3(
+				elm$core$Elm$JsArray$unsafeSet,
+				pos,
+				elm$core$Array$SubTree(newSub),
+				tree);
+		} else {
+			var values = _n0.a;
+			var newLeaf = A3(elm$core$Elm$JsArray$unsafeSet, elm$core$Array$bitMask & index, value, values);
+			return A3(
+				elm$core$Elm$JsArray$unsafeSet,
+				pos,
+				elm$core$Array$Leaf(newLeaf),
+				tree);
+		}
+	});
+var elm$core$Array$set = F3(
+	function (index, value, array) {
+		var len = array.a;
+		var startShift = array.b;
+		var tree = array.c;
+		var tail = array.d;
+		return ((index < 0) || (_Utils_cmp(index, len) > -1)) ? array : ((_Utils_cmp(
+			index,
+			elm$core$Array$tailIndex(len)) > -1) ? A4(
+			elm$core$Array$Array_elm_builtin,
+			len,
+			startShift,
+			tree,
+			A3(elm$core$Elm$JsArray$unsafeSet, elm$core$Array$bitMask & index, value, tail)) : A4(
+			elm$core$Array$Array_elm_builtin,
+			len,
+			startShift,
+			A4(elm$core$Array$setHelp, startShift, index, value, tree),
+			tail));
+	});
+var elm$core$Dict$getMin = function (dict) {
+	getMin:
+	while (true) {
+		if ((dict.$ === 'RBNode_elm_builtin') && (dict.d.$ === 'RBNode_elm_builtin')) {
+			var left = dict.d;
+			var $temp$dict = left;
+			dict = $temp$dict;
+			continue getMin;
+		} else {
+			return dict;
+		}
+	}
+};
+var elm$core$Dict$moveRedLeft = function (dict) {
+	if (((dict.$ === 'RBNode_elm_builtin') && (dict.d.$ === 'RBNode_elm_builtin')) && (dict.e.$ === 'RBNode_elm_builtin')) {
+		if ((dict.e.d.$ === 'RBNode_elm_builtin') && (dict.e.d.a.$ === 'Red')) {
+			var clr = dict.a;
+			var k = dict.b;
+			var v = dict.c;
+			var _n1 = dict.d;
+			var lClr = _n1.a;
+			var lK = _n1.b;
+			var lV = _n1.c;
+			var lLeft = _n1.d;
+			var lRight = _n1.e;
+			var _n2 = dict.e;
+			var rClr = _n2.a;
+			var rK = _n2.b;
+			var rV = _n2.c;
+			var rLeft = _n2.d;
+			var _n3 = rLeft.a;
+			var rlK = rLeft.b;
+			var rlV = rLeft.c;
+			var rlL = rLeft.d;
+			var rlR = rLeft.e;
+			var rRight = _n2.e;
+			return A5(
+				elm$core$Dict$RBNode_elm_builtin,
+				elm$core$Dict$Red,
+				rlK,
+				rlV,
+				A5(
+					elm$core$Dict$RBNode_elm_builtin,
+					elm$core$Dict$Black,
+					k,
+					v,
+					A5(elm$core$Dict$RBNode_elm_builtin, elm$core$Dict$Red, lK, lV, lLeft, lRight),
+					rlL),
+				A5(elm$core$Dict$RBNode_elm_builtin, elm$core$Dict$Black, rK, rV, rlR, rRight));
+		} else {
+			var clr = dict.a;
+			var k = dict.b;
+			var v = dict.c;
+			var _n4 = dict.d;
+			var lClr = _n4.a;
+			var lK = _n4.b;
+			var lV = _n4.c;
+			var lLeft = _n4.d;
+			var lRight = _n4.e;
+			var _n5 = dict.e;
+			var rClr = _n5.a;
+			var rK = _n5.b;
+			var rV = _n5.c;
+			var rLeft = _n5.d;
+			var rRight = _n5.e;
+			if (clr.$ === 'Black') {
+				return A5(
+					elm$core$Dict$RBNode_elm_builtin,
+					elm$core$Dict$Black,
+					k,
+					v,
+					A5(elm$core$Dict$RBNode_elm_builtin, elm$core$Dict$Red, lK, lV, lLeft, lRight),
+					A5(elm$core$Dict$RBNode_elm_builtin, elm$core$Dict$Red, rK, rV, rLeft, rRight));
+			} else {
+				return A5(
+					elm$core$Dict$RBNode_elm_builtin,
+					elm$core$Dict$Black,
+					k,
+					v,
+					A5(elm$core$Dict$RBNode_elm_builtin, elm$core$Dict$Red, lK, lV, lLeft, lRight),
+					A5(elm$core$Dict$RBNode_elm_builtin, elm$core$Dict$Red, rK, rV, rLeft, rRight));
+			}
+		}
+	} else {
+		return dict;
+	}
+};
+var elm$core$Dict$moveRedRight = function (dict) {
+	if (((dict.$ === 'RBNode_elm_builtin') && (dict.d.$ === 'RBNode_elm_builtin')) && (dict.e.$ === 'RBNode_elm_builtin')) {
+		if ((dict.d.d.$ === 'RBNode_elm_builtin') && (dict.d.d.a.$ === 'Red')) {
+			var clr = dict.a;
+			var k = dict.b;
+			var v = dict.c;
+			var _n1 = dict.d;
+			var lClr = _n1.a;
+			var lK = _n1.b;
+			var lV = _n1.c;
+			var _n2 = _n1.d;
+			var _n3 = _n2.a;
+			var llK = _n2.b;
+			var llV = _n2.c;
+			var llLeft = _n2.d;
+			var llRight = _n2.e;
+			var lRight = _n1.e;
+			var _n4 = dict.e;
+			var rClr = _n4.a;
+			var rK = _n4.b;
+			var rV = _n4.c;
+			var rLeft = _n4.d;
+			var rRight = _n4.e;
+			return A5(
+				elm$core$Dict$RBNode_elm_builtin,
+				elm$core$Dict$Red,
+				lK,
+				lV,
+				A5(elm$core$Dict$RBNode_elm_builtin, elm$core$Dict$Black, llK, llV, llLeft, llRight),
+				A5(
+					elm$core$Dict$RBNode_elm_builtin,
+					elm$core$Dict$Black,
+					k,
+					v,
+					lRight,
+					A5(elm$core$Dict$RBNode_elm_builtin, elm$core$Dict$Red, rK, rV, rLeft, rRight)));
+		} else {
+			var clr = dict.a;
+			var k = dict.b;
+			var v = dict.c;
+			var _n5 = dict.d;
+			var lClr = _n5.a;
+			var lK = _n5.b;
+			var lV = _n5.c;
+			var lLeft = _n5.d;
+			var lRight = _n5.e;
+			var _n6 = dict.e;
+			var rClr = _n6.a;
+			var rK = _n6.b;
+			var rV = _n6.c;
+			var rLeft = _n6.d;
+			var rRight = _n6.e;
+			if (clr.$ === 'Black') {
+				return A5(
+					elm$core$Dict$RBNode_elm_builtin,
+					elm$core$Dict$Black,
+					k,
+					v,
+					A5(elm$core$Dict$RBNode_elm_builtin, elm$core$Dict$Red, lK, lV, lLeft, lRight),
+					A5(elm$core$Dict$RBNode_elm_builtin, elm$core$Dict$Red, rK, rV, rLeft, rRight));
+			} else {
+				return A5(
+					elm$core$Dict$RBNode_elm_builtin,
+					elm$core$Dict$Black,
+					k,
+					v,
+					A5(elm$core$Dict$RBNode_elm_builtin, elm$core$Dict$Red, lK, lV, lLeft, lRight),
+					A5(elm$core$Dict$RBNode_elm_builtin, elm$core$Dict$Red, rK, rV, rLeft, rRight));
+			}
+		}
+	} else {
+		return dict;
+	}
+};
+var elm$core$Dict$removeHelpPrepEQGT = F7(
+	function (targetKey, dict, color, key, value, left, right) {
+		if ((left.$ === 'RBNode_elm_builtin') && (left.a.$ === 'Red')) {
+			var _n1 = left.a;
+			var lK = left.b;
+			var lV = left.c;
+			var lLeft = left.d;
+			var lRight = left.e;
+			return A5(
+				elm$core$Dict$RBNode_elm_builtin,
+				color,
+				lK,
+				lV,
+				lLeft,
+				A5(elm$core$Dict$RBNode_elm_builtin, elm$core$Dict$Red, key, value, lRight, right));
+		} else {
+			_n2$2:
+			while (true) {
+				if ((right.$ === 'RBNode_elm_builtin') && (right.a.$ === 'Black')) {
+					if (right.d.$ === 'RBNode_elm_builtin') {
+						if (right.d.a.$ === 'Black') {
+							var _n3 = right.a;
+							var _n4 = right.d;
+							var _n5 = _n4.a;
+							return elm$core$Dict$moveRedRight(dict);
+						} else {
+							break _n2$2;
+						}
+					} else {
+						var _n6 = right.a;
+						var _n7 = right.d;
+						return elm$core$Dict$moveRedRight(dict);
+					}
+				} else {
+					break _n2$2;
+				}
+			}
+			return dict;
+		}
+	});
+var elm$core$Dict$removeMin = function (dict) {
+	if ((dict.$ === 'RBNode_elm_builtin') && (dict.d.$ === 'RBNode_elm_builtin')) {
+		var color = dict.a;
+		var key = dict.b;
+		var value = dict.c;
+		var left = dict.d;
+		var lColor = left.a;
+		var lLeft = left.d;
+		var right = dict.e;
+		if (lColor.$ === 'Black') {
+			if ((lLeft.$ === 'RBNode_elm_builtin') && (lLeft.a.$ === 'Red')) {
+				var _n3 = lLeft.a;
+				return A5(
+					elm$core$Dict$RBNode_elm_builtin,
+					color,
+					key,
+					value,
+					elm$core$Dict$removeMin(left),
+					right);
+			} else {
+				var _n4 = elm$core$Dict$moveRedLeft(dict);
+				if (_n4.$ === 'RBNode_elm_builtin') {
+					var nColor = _n4.a;
+					var nKey = _n4.b;
+					var nValue = _n4.c;
+					var nLeft = _n4.d;
+					var nRight = _n4.e;
+					return A5(
+						elm$core$Dict$balance,
+						nColor,
+						nKey,
+						nValue,
+						elm$core$Dict$removeMin(nLeft),
+						nRight);
+				} else {
+					return elm$core$Dict$RBEmpty_elm_builtin;
+				}
+			}
+		} else {
+			return A5(
+				elm$core$Dict$RBNode_elm_builtin,
+				color,
+				key,
+				value,
+				elm$core$Dict$removeMin(left),
+				right);
+		}
+	} else {
+		return elm$core$Dict$RBEmpty_elm_builtin;
+	}
+};
+var elm$core$Dict$removeHelp = F2(
+	function (targetKey, dict) {
+		if (dict.$ === 'RBEmpty_elm_builtin') {
+			return elm$core$Dict$RBEmpty_elm_builtin;
+		} else {
+			var color = dict.a;
+			var key = dict.b;
+			var value = dict.c;
+			var left = dict.d;
+			var right = dict.e;
+			if (_Utils_cmp(targetKey, key) < 0) {
+				if ((left.$ === 'RBNode_elm_builtin') && (left.a.$ === 'Black')) {
+					var _n4 = left.a;
+					var lLeft = left.d;
+					if ((lLeft.$ === 'RBNode_elm_builtin') && (lLeft.a.$ === 'Red')) {
+						var _n6 = lLeft.a;
+						return A5(
+							elm$core$Dict$RBNode_elm_builtin,
+							color,
+							key,
+							value,
+							A2(elm$core$Dict$removeHelp, targetKey, left),
+							right);
+					} else {
+						var _n7 = elm$core$Dict$moveRedLeft(dict);
+						if (_n7.$ === 'RBNode_elm_builtin') {
+							var nColor = _n7.a;
+							var nKey = _n7.b;
+							var nValue = _n7.c;
+							var nLeft = _n7.d;
+							var nRight = _n7.e;
+							return A5(
+								elm$core$Dict$balance,
+								nColor,
+								nKey,
+								nValue,
+								A2(elm$core$Dict$removeHelp, targetKey, nLeft),
+								nRight);
+						} else {
+							return elm$core$Dict$RBEmpty_elm_builtin;
+						}
+					}
+				} else {
+					return A5(
+						elm$core$Dict$RBNode_elm_builtin,
+						color,
+						key,
+						value,
+						A2(elm$core$Dict$removeHelp, targetKey, left),
+						right);
+				}
+			} else {
+				return A2(
+					elm$core$Dict$removeHelpEQGT,
+					targetKey,
+					A7(elm$core$Dict$removeHelpPrepEQGT, targetKey, dict, color, key, value, left, right));
+			}
+		}
+	});
+var elm$core$Dict$removeHelpEQGT = F2(
+	function (targetKey, dict) {
+		if (dict.$ === 'RBNode_elm_builtin') {
+			var color = dict.a;
+			var key = dict.b;
+			var value = dict.c;
+			var left = dict.d;
+			var right = dict.e;
+			if (_Utils_eq(targetKey, key)) {
+				var _n1 = elm$core$Dict$getMin(right);
+				if (_n1.$ === 'RBNode_elm_builtin') {
+					var minKey = _n1.b;
+					var minValue = _n1.c;
+					return A5(
+						elm$core$Dict$balance,
+						color,
+						minKey,
+						minValue,
+						left,
+						elm$core$Dict$removeMin(right));
+				} else {
+					return elm$core$Dict$RBEmpty_elm_builtin;
+				}
+			} else {
+				return A5(
+					elm$core$Dict$balance,
+					color,
+					key,
+					value,
+					left,
+					A2(elm$core$Dict$removeHelp, targetKey, right));
+			}
+		} else {
+			return elm$core$Dict$RBEmpty_elm_builtin;
+		}
+	});
+var elm$core$Dict$remove = F2(
+	function (key, dict) {
+		var _n0 = A2(elm$core$Dict$removeHelp, key, dict);
+		if ((_n0.$ === 'RBNode_elm_builtin') && (_n0.a.$ === 'Red')) {
+			var _n1 = _n0.a;
+			var k = _n0.b;
+			var v = _n0.c;
+			var l = _n0.d;
+			var r = _n0.e;
+			return A5(elm$core$Dict$RBNode_elm_builtin, elm$core$Dict$Black, k, v, l, r);
+		} else {
+			var x = _n0;
+			return x;
+		}
+	});
+var elm$core$Dict$update = F3(
+	function (targetKey, alter, dictionary) {
+		var _n0 = alter(
+			A2(elm$core$Dict$get, targetKey, dictionary));
+		if (_n0.$ === 'Just') {
+			var value = _n0.a;
+			return A3(elm$core$Dict$insert, targetKey, value, dictionary);
+		} else {
+			return A2(elm$core$Dict$remove, targetKey, dictionary);
+		}
+	});
+var author$project$Main$selectHoldPit = F2(
+	function (newSelectedPitNumber, gamePlayInfo) {
+		var turnPlayerInfo = A2(author$project$Main$getPlayerInfo, gamePlayInfo.turnPlayerID, gamePlayInfo);
+		var selectedPitSeedCount = A2(
+			elm$core$Maybe$withDefault,
+			-1,
+			A2(elm$core$Array$get, newSelectedPitNumber, turnPlayerInfo.pitSeedCounts));
+		var newHoldPit = elm$core$Maybe$Just(
+			{
+				pitNumber: newSelectedPitNumber,
+				seedCount: A2(
+					elm$core$Maybe$withDefault,
+					-1,
+					A2(
+						elm$core$Array$get,
+						newSelectedPitNumber,
+						A2(author$project$Main$getPlayerInfo, gamePlayInfo.turnPlayerID, gamePlayInfo).pitSeedCounts))
+			});
+		if (!selectedPitSeedCount) {
+			return gamePlayInfo;
+		} else {
+			var _n0 = gamePlayInfo.holdPit;
+			if (_n0.$ === 'Nothing') {
+				var updatePit = function (playerInfo) {
+					return _Utils_update(
+						playerInfo,
+						{
+							pitSeedCounts: A3(elm$core$Array$set, newSelectedPitNumber, 0, playerInfo.pitSeedCounts)
+						});
+				};
+				return _Utils_update(
+					gamePlayInfo,
+					{
+						holdPit: newHoldPit,
+						playerInfoTable: A3(
+							elm$core$Dict$update,
+							gamePlayInfo.turnPlayerID,
+							elm$core$Maybe$map(updatePit),
+							gamePlayInfo.playerInfoTable)
+					});
+			} else {
+				var holdPit = _n0.a;
+				if (_Utils_eq(newSelectedPitNumber, holdPit.pitNumber)) {
+					return gamePlayInfo;
+				} else {
+					var updatePit = function (playerInfo) {
+						return _Utils_update(
+							playerInfo,
+							{
+								pitSeedCounts: A3(
+									elm$core$Array$set,
+									newSelectedPitNumber,
+									0,
+									A3(elm$core$Array$set, holdPit.pitNumber, holdPit.seedCount, playerInfo.pitSeedCounts))
+							});
+					};
+					return _Utils_update(
+						gamePlayInfo,
+						{
+							holdPit: newHoldPit,
+							playerInfoTable: A3(
+								elm$core$Dict$update,
+								gamePlayInfo.turnPlayerID,
+								elm$core$Maybe$map(updatePit),
+								gamePlayInfo.playerInfoTable)
+						});
+				}
+			}
+		}
+	});
+var author$project$Main$Store = {$: 'Store'};
+var elm_community$array_extra$Array$Extra$update = F3(
+	function (n, f, a) {
+		var element = A2(elm$core$Array$get, n, a);
+		if (element.$ === 'Nothing') {
+			return a;
+		} else {
+			var element_ = element.a;
+			return A3(
+				elm$core$Array$set,
+				n,
+				f(element_),
+				a);
+		}
+	});
+var author$project$Main$sowingOneStep = function (gamePlayInfo) {
+	var _n0 = _Utils_Tuple2(gamePlayInfo.holdPit, gamePlayInfo.sowedHole);
+	if ((_n0.a.$ === 'Just') && (_n0.b.$ === 'Just')) {
+		var holdPit = _n0.a.a;
+		var prevSowedHole = _n0.b.a;
+		var sowingHoleNumber = function () {
+			var _n3 = prevSowedHole.holeNumber;
+			if (_n3.$ === 'Store') {
+				return author$project$Main$Pit(0);
+			} else {
+				var pitNumber = _n3.a;
+				return _Utils_eq(pitNumber + 1, gamePlayInfo.pitCount) ? author$project$Main$Store : author$project$Main$Pit(pitNumber + 1);
+			}
+		}();
+		if (sowingHoleNumber.$ === 'Store') {
+			var addStoreSeed = function (playerInfo) {
+				return _Utils_update(
+					playerInfo,
+					{storeSeedCount: playerInfo.storeSeedCount + 1});
+			};
+			return _Utils_update(
+				gamePlayInfo,
+				{
+					holdPit: elm$core$Maybe$Just(
+						_Utils_update(
+							holdPit,
+							{seedCount: holdPit.seedCount - 1})),
+					playerInfoTable: A3(
+						elm$core$Dict$update,
+						prevSowedHole.playerID,
+						elm$core$Maybe$map(addStoreSeed),
+						gamePlayInfo.playerInfoTable),
+					sowedHole: elm$core$Maybe$Just(
+						{holeNumber: author$project$Main$Store, playerID: prevSowedHole.playerID})
+				});
+		} else {
+			var sowingPitNumber = sowingHoleNumber.a;
+			var sowingPlayerID = function () {
+				var _n2 = prevSowedHole.holeNumber;
+				if (_n2.$ === 'Store') {
+					return A2(
+						elm$core$Maybe$withDefault,
+						author$project$Main$defaultPlayerID,
+						A2(elm$core$Dict$get, prevSowedHole.playerID, gamePlayInfo.nextOrderIDTable));
+				} else {
+					return prevSowedHole.playerID;
+				}
+			}();
+			var isSowedToTurnPlayerPit = _Utils_eq(sowingPitNumber, holdPit.pitNumber);
+			var isSowedToTurnPlayer = _Utils_eq(sowingPlayerID, gamePlayInfo.turnPlayerID);
+			if (isSowedToTurnPlayer && isSowedToTurnPlayerPit) {
+				return _Utils_update(
+					gamePlayInfo,
+					{
+						sowedHole: elm$core$Maybe$Just(
+							{holeNumber: sowingHoleNumber, playerID: sowingPlayerID})
+					});
+			} else {
+				var addPitSeed = function (playerInfo) {
+					return _Utils_update(
+						playerInfo,
+						{
+							pitSeedCounts: A3(
+								elm_community$array_extra$Array$Extra$update,
+								sowingPitNumber,
+								function (pitCount) {
+									return pitCount + 1;
+								},
+								playerInfo.pitSeedCounts)
+						});
+				};
+				return _Utils_update(
+					gamePlayInfo,
+					{
+						holdPit: elm$core$Maybe$Just(
+							_Utils_update(
+								holdPit,
+								{seedCount: holdPit.seedCount - 1})),
+						playerInfoTable: A3(
+							elm$core$Dict$update,
+							sowingPlayerID,
+							elm$core$Maybe$map(addPitSeed),
+							gamePlayInfo.playerInfoTable),
+						sowedHole: elm$core$Maybe$Just(
+							{holeNumber: sowingHoleNumber, playerID: sowingPlayerID})
+					});
+			}
+		}
+	} else {
+		return gamePlayInfo;
+	}
+};
+var author$project$Main$sowingAtOnce = function (gamePlayInfo) {
+	var _n0 = _Utils_Tuple2(gamePlayInfo.holdPit, gamePlayInfo.sowedHole);
+	if (_n0.a.$ === 'Just') {
+		if (_n0.b.$ === 'Nothing') {
+			var holdPit = _n0.a.a;
+			var _n1 = _n0.b;
+			return author$project$Main$sowingAtOnce(
+				_Utils_update(
+					gamePlayInfo,
+					{
+						sowedHole: elm$core$Maybe$Just(
+							{
+								holeNumber: author$project$Main$Pit(holdPit.pitNumber),
+								playerID: gamePlayInfo.turnPlayerID
+							})
+					}));
+		} else {
+			var holdPit = _n0.a.a;
+			return (!holdPit.seedCount) ? gamePlayInfo : author$project$Main$sowingAtOnce(
+				author$project$Main$sowingOneStep(gamePlayInfo));
+		}
+	} else {
+		return gamePlayInfo;
+	}
+};
+var elm$core$Platform$Cmd$none = elm$core$Platform$Cmd$batch(_List_Nil);
+var author$project$Main$update = F2(
+	function (msg, model) {
+		switch (msg.$) {
+			case 'Tick':
+				var posix = msg.a;
+				return _Utils_Tuple2(
+					author$project$Main$doTimeRelatedEvents(
+						_Utils_update(
+							model,
+							{nowTime: posix})),
+					elm$core$Platform$Cmd$none);
+			case 'GetGameStartTime':
+				var posix = msg.a;
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{nowTime: posix, turnStartTime: posix}),
+					elm$core$Platform$Cmd$none);
+			case 'InitOrderIDs':
+				var orderIDs = msg.a;
+				return _Utils_Tuple2(
+					A2(author$project$Main$initOrderIDs, orderIDs, model),
+					elm$core$Platform$Cmd$none);
+			case 'SelectHoldPit':
+				var pitNumber = msg.a;
+				return _Utils_Tuple2(
+					A2(author$project$Main$selectHoldPit, pitNumber, model),
+					elm$core$Platform$Cmd$none);
+			case 'Sowing':
+				return _Utils_Tuple2(
+					author$project$Main$moveTurn(
+						author$project$Main$sowingAtOnce(model)),
+					elm$core$Platform$Cmd$none);
+			default:
+				return _Utils_Tuple2(
+					author$project$Main$initGamePlayInfo(author$project$Main$dammyGameInitInfo),
+					elm$core$Platform$Cmd$batch(
+						_List_fromArray(
+							[
+								A2(elm$core$Task$perform, author$project$Main$GetGameStartTime, elm$time$Time$now),
+								A2(
+								elm$random$Random$generate,
+								author$project$Main$InitOrderIDs,
+								elm_community$random_extra$Random$List$shuffle(
+									elm$core$Set$toList(author$project$Main$dammyGameInitInfo.playerIDs)))
+							])));
+		}
+	});
+var author$project$Main$NextGame = {$: 'NextGame'};
+var author$project$Main$SelectHoldPit = function (a) {
+	return {$: 'SelectHoldPit', a: a};
+};
+var elm$core$Dict$sizeHelp = F2(
+	function (n, dict) {
+		sizeHelp:
+		while (true) {
+			if (dict.$ === 'RBEmpty_elm_builtin') {
+				return n;
+			} else {
+				var left = dict.d;
+				var right = dict.e;
+				var $temp$n = A2(elm$core$Dict$sizeHelp, n + 1, right),
+					$temp$dict = left;
+				n = $temp$n;
+				dict = $temp$dict;
+				continue sizeHelp;
+			}
+		}
+	});
+var elm$core$Dict$size = function (dict) {
+	return A2(elm$core$Dict$sizeHelp, 0, dict);
+};
+var elm_community$list_extra$List$Extra$scanl = F3(
+	function (f, b, xs) {
+		var scan1 = F2(
+			function (x, accAcc) {
+				if (accAcc.b) {
+					var acc = accAcc.a;
+					return A2(
+						elm$core$List$cons,
+						A2(f, x, acc),
+						accAcc);
+				} else {
+					return _List_Nil;
+				}
+			});
+		return elm$core$List$reverse(
+			A3(
+				elm$core$List$foldl,
+				scan1,
+				_List_fromArray(
+					[b]),
+				xs));
+	});
+var author$project$Main$getOrderedIDs = function (gamePlayInfo) {
+	var playerCount = elm$core$Dict$size(gamePlayInfo.playerInfoTable);
+	return A3(
+		elm_community$list_extra$List$Extra$scanl,
+		F2(
+			function (_n0, prevPlayerID) {
+				return A2(author$project$Main$getNextOrderID, prevPlayerID, gamePlayInfo);
+			}),
+		gamePlayInfo.cliantID,
+		A2(elm$core$List$repeat, playerCount - 1, _Utils_Tuple0));
+};
+var elm$core$Elm$JsArray$foldl = _JsArray_foldl;
+var elm$core$Elm$JsArray$indexedMap = _JsArray_indexedMap;
+var elm$core$Array$indexedMap = F2(
+	function (func, _n0) {
+		var len = _n0.a;
+		var tree = _n0.c;
+		var tail = _n0.d;
+		var initialBuilder = {
+			nodeList: _List_Nil,
+			nodeListSize: 0,
+			tail: A3(
+				elm$core$Elm$JsArray$indexedMap,
+				func,
+				elm$core$Array$tailIndex(len),
+				tail)
+		};
+		var helper = F2(
+			function (node, builder) {
+				if (node.$ === 'SubTree') {
+					var subTree = node.a;
+					return A3(elm$core$Elm$JsArray$foldl, helper, builder, subTree);
+				} else {
+					var leaf = node.a;
+					var offset = builder.nodeListSize * elm$core$Array$branchFactor;
+					var mappedLeaf = elm$core$Array$Leaf(
+						A3(elm$core$Elm$JsArray$indexedMap, func, offset, leaf));
+					return {
+						nodeList: A2(elm$core$List$cons, mappedLeaf, builder.nodeList),
+						nodeListSize: builder.nodeListSize + 1,
+						tail: builder.tail
+					};
+				}
+			});
+		return A2(
+			elm$core$Array$builderToArray,
+			true,
+			A3(elm$core$Elm$JsArray$foldl, helper, initialBuilder, tree));
+	});
+var elm$core$Elm$JsArray$map = _JsArray_map;
+var elm$core$Array$map = F2(
+	function (func, _n0) {
+		var len = _n0.a;
+		var startShift = _n0.b;
+		var tree = _n0.c;
+		var tail = _n0.d;
+		var helper = function (node) {
+			if (node.$ === 'SubTree') {
+				var subTree = node.a;
+				return elm$core$Array$SubTree(
+					A2(elm$core$Elm$JsArray$map, helper, subTree));
+			} else {
+				var values = node.a;
+				return elm$core$Array$Leaf(
+					A2(elm$core$Elm$JsArray$map, func, values));
+			}
+		};
+		return A4(
+			elm$core$Array$Array_elm_builtin,
+			len,
+			startShift,
+			A2(elm$core$Elm$JsArray$map, helper, tree),
+			A2(elm$core$Elm$JsArray$map, func, tail));
+	});
+var elm$core$String$concat = function (strings) {
+	return A2(elm$core$String$join, '', strings);
+};
+var elm$core$String$cons = _String_cons;
+var elm$core$String$fromChar = function (_char) {
+	return A2(elm$core$String$cons, _char, '');
+};
+var elm$core$String$length = _String_length;
+var elm$core$Bitwise$shiftRightBy = _Bitwise_shiftRightBy;
+var elm$core$String$repeatHelp = F3(
+	function (n, chunk, result) {
+		return (n <= 0) ? result : A3(
+			elm$core$String$repeatHelp,
+			n >> 1,
+			_Utils_ap(chunk, chunk),
+			(!(n & 1)) ? result : _Utils_ap(result, chunk));
+	});
+var elm$core$String$repeat = F2(
+	function (n, chunk) {
+		return A3(elm$core$String$repeatHelp, n, chunk, '');
+	});
+var elm$core$String$padRight = F3(
+	function (n, _char, string) {
+		return _Utils_ap(
+			string,
+			A2(
+				elm$core$String$repeat,
+				n - elm$core$String$length(string),
+				elm$core$String$fromChar(_char)));
+	});
+var elm$json$Json$Decode$map = _Json_map1;
+var elm$json$Json$Decode$map2 = _Json_map2;
+var elm$json$Json$Decode$succeed = _Json_succeed;
+var elm$virtual_dom$VirtualDom$toHandlerInt = function (handler) {
+	switch (handler.$) {
+		case 'Normal':
+			return 0;
+		case 'MayStopPropagation':
+			return 1;
+		case 'MayPreventDefault':
+			return 2;
+		default:
+			return 3;
+	}
+};
+var elm$html$Html$button = _VirtualDom_node('button');
+var elm$html$Html$div = _VirtualDom_node('div');
+var elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
+var elm$html$Html$text = elm$virtual_dom$VirtualDom$text;
+var elm$virtual_dom$VirtualDom$Normal = function (a) {
+	return {$: 'Normal', a: a};
+};
+var elm$virtual_dom$VirtualDom$on = _VirtualDom_on;
+var elm$html$Html$Events$on = F2(
+	function (event, decoder) {
+		return A2(
+			elm$virtual_dom$VirtualDom$on,
+			event,
+			elm$virtual_dom$VirtualDom$Normal(decoder));
+	});
+var elm$html$Html$Events$onClick = function (msg) {
+	return A2(
+		elm$html$Html$Events$on,
+		'click',
+		elm$json$Json$Decode$succeed(msg));
+};
+var elm$core$String$slice = _String_slice;
+var elm$core$String$dropLeft = F2(
+	function (n, string) {
+		return (n < 1) ? string : A3(
+			elm$core$String$slice,
+			n,
+			elm$core$String$length(string),
+			string);
+	});
+var elm_community$string_extra$String$Extra$breaker = F3(
+	function (width, string, acc) {
+		breaker:
+		while (true) {
+			if (string === '') {
+				return elm$core$List$reverse(acc);
+			} else {
+				var $temp$width = width,
+					$temp$string = A2(elm$core$String$dropLeft, width, string),
+					$temp$acc = A2(
+					elm$core$List$cons,
+					A3(elm$core$String$slice, 0, width, string),
+					acc);
+				width = $temp$width;
+				string = $temp$string;
+				acc = $temp$acc;
+				continue breaker;
+			}
+		}
+	});
+var elm_community$string_extra$String$Extra$break = F2(
+	function (width, string) {
+		return ((!width) || (string === '')) ? _List_fromArray(
+			[string]) : A3(elm_community$string_extra$String$Extra$breaker, width, string, _List_Nil);
+	});
+var elm_community$string_extra$String$Extra$wrapWith = F3(
+	function (width, separator, string) {
+		return A2(
+			elm$core$String$join,
+			separator,
+			A2(elm_community$string_extra$String$Extra$break, width, string));
+	});
+var author$project$Main$viewBoard = function (gamePlayInfo) {
+	var viewPlayer = function (playerInfo) {
+		var storeText = elm$html$Html$text(
+			'{' + (elm$core$String$fromInt(playerInfo.storeSeedCount) + '}'));
+		var playerIDText = elm$html$Html$text(
+			A3(
+				elm$core$String$padRight,
+				20,
+				_Utils_chr('.'),
+				'playerID ' + playerInfo.playerID));
+		if (_Utils_eq(playerInfo.playerID, gamePlayInfo.turnPlayerID)) {
+			var _n0 = gamePlayInfo.holdPit;
+			if (_n0.$ === 'Just') {
+				var holdPit = _n0.a;
+				var viewPitButtonOrHold = F2(
+					function (viewPitNumber, seedCount) {
+						return _Utils_eq(holdPit.pitNumber, viewPitNumber) ? elm$html$Html$text(
+							'[' + (elm$core$String$fromInt(holdPit.seedCount) + ']')) : A2(
+							elm$html$Html$button,
+							_List_fromArray(
+								[
+									elm$html$Html$Events$onClick(
+									author$project$Main$SelectHoldPit(viewPitNumber))
+								]),
+							_List_fromArray(
+								[
+									elm$html$Html$text(
+									elm$core$String$fromInt(seedCount))
+								]));
+					});
+				var pitButtonOrHolds = elm$core$Array$toList(
+					A2(elm$core$Array$indexedMap, viewPitButtonOrHold, playerInfo.pitSeedCounts));
+				var holdText = elm$html$Html$text(
+					' -- hold ' + elm$core$String$fromInt(holdPit.pitNumber));
+				return A2(
+					elm$html$Html$div,
+					_List_Nil,
+					A2(
+						elm$core$List$cons,
+						playerIDText,
+						_Utils_ap(
+							pitButtonOrHolds,
+							_List_fromArray(
+								[storeText, holdText]))));
+			} else {
+				var viewPitButton = F2(
+					function (pitNumber, seedCount) {
+						return A2(
+							elm$html$Html$button,
+							_List_fromArray(
+								[
+									elm$html$Html$Events$onClick(
+									author$project$Main$SelectHoldPit(pitNumber))
+								]),
+							_List_fromArray(
+								[
+									elm$html$Html$text(
+									elm$core$String$fromInt(seedCount) + ' ')
+								]));
+					});
+				var pitButtons = elm$core$Array$toList(
+					A2(elm$core$Array$indexedMap, viewPitButton, playerInfo.pitSeedCounts));
+				return A2(
+					elm$html$Html$div,
+					_List_Nil,
+					A2(
+						elm$core$List$cons,
+						playerIDText,
+						_Utils_ap(
+							pitButtons,
+							_List_fromArray(
+								[storeText]))));
+			}
+		} else {
+			var pitText = elm$html$Html$text(
+				A3(
+					elm_community$string_extra$String$Extra$wrapWith,
+					3,
+					',',
+					elm$core$String$concat(
+						elm$core$Array$toList(
+							A2(
+								elm$core$Array$map,
+								function (pit) {
+									return '[' + (pit + ']');
+								},
+								A2(elm$core$Array$map, elm$core$String$fromInt, playerInfo.pitSeedCounts))))));
+			return A2(
+				elm$html$Html$div,
+				_List_Nil,
+				_List_fromArray(
+					[playerIDText, pitText, storeText]));
+		}
+	};
+	return A2(
+		elm$html$Html$div,
+		_List_Nil,
+		A2(
+			elm$core$List$map,
+			viewPlayer,
+			A2(
+				elm$core$List$map,
+				function (orderedID) {
+					return A2(author$project$Main$getPlayerInfo, orderedID, gamePlayInfo);
+				},
+				author$project$Main$getOrderedIDs(gamePlayInfo))));
+};
+var author$project$Main$viewEndBoard = function (gamePlayInfo) {
+	var viewPlayer = function (playerInfo) {
+		var storeText = elm$html$Html$text(
+			'[' + (elm$core$String$fromInt(playerInfo.storeSeedCount) + '] '));
+		var playerIDText = elm$html$Html$text('playerID ' + (playerInfo.playerID + '   '));
+		var pitTexts = elm$core$Array$toList(
+			A2(
+				elm$core$Array$map,
+				function (seedCount) {
+					return elm$html$Html$text(
+						elm$core$String$concat(
+							_List_fromArray(
+								[
+									'[' + elm$core$String$fromInt(seedCount),
+									'] '
+								])));
+				},
+				playerInfo.pitSeedCounts));
+		return A2(
+			elm$html$Html$div,
+			_List_Nil,
+			A2(
+				elm$core$List$cons,
+				playerIDText,
+				_Utils_ap(
+					pitTexts,
+					_List_fromArray(
+						[storeText]))));
+	};
+	return A2(
+		elm$html$Html$div,
+		_List_Nil,
+		A2(
+			elm$core$List$map,
+			viewPlayer,
+			A2(
+				elm$core$List$map,
+				function (orderedID) {
+					return A2(author$project$Main$getPlayerInfo, orderedID, gamePlayInfo);
+				},
+				author$project$Main$getOrderedIDs(gamePlayInfo))));
+};
 var author$project$Main$viewReminingTimer = function (gamePlayInfo) {
-	var reminingTime = author$project$Main$getReminingTime(gamePlayInfo);
-	return elm$html$Html$text(
-		elm$core$String$fromInt(
-			(reminingTime < 0) ? 0 : reminingTime));
+	var diffTime = author$project$Main$getReminingTime(gamePlayInfo);
+	var reminingTime = (diffTime < 0) ? 0 : diffTime;
+	return A2(
+		elm$html$Html$div,
+		_List_Nil,
+		_List_fromArray(
+			[
+				elm$html$Html$text(
+				'reminingTime : ' + elm$core$String$fromInt(reminingTime))
+			]));
 };
 var author$project$Main$Sowing = {$: 'Sowing'};
 var elm$json$Json$Encode$bool = _Json_wrap;
@@ -8365,6 +8375,15 @@ var author$project$Main$viewSowingButton = function (gamePlayInfo) {
 				elm$html$Html$text('sowing')
 			]));
 };
+var author$project$Main$viewTurnPlayer = function (gamePlayInfo) {
+	return A2(
+		elm$html$Html$div,
+		_List_Nil,
+		_List_fromArray(
+			[
+				elm$html$Html$text('turnPlayer : ' + gamePlayInfo.turnPlayerID)
+			]));
+};
 var author$project$Main$view = function (model) {
 	var _n0 = model.winnerID;
 	if (_n0.$ === 'Just') {
@@ -8393,9 +8412,10 @@ var author$project$Main$view = function (model) {
 			_List_Nil,
 			_List_fromArray(
 				[
+					author$project$Main$viewTurnPlayer(model),
+					author$project$Main$viewReminingTimer(model),
 					author$project$Main$viewBoard(model),
-					author$project$Main$viewSowingButton(model),
-					author$project$Main$viewReminingTimer(model)
+					author$project$Main$viewSowingButton(model)
 				]));
 	}
 };
@@ -11742,7 +11762,7 @@ var elm$browser$Browser$element = _Browser_element;
 var author$project$Main$main = elm$browser$Browser$element(
 	{init: author$project$Main$init, subscriptions: author$project$Main$subscriptions, update: author$project$Main$update, view: author$project$Main$view});
 _Platform_export({'Main':{'init':author$project$Main$main(
-	elm$json$Json$Decode$succeed(_Utils_Tuple0))({"versions":{"elm":"0.19.0"},"types":{"message":"Main.Msg","aliases":{"Main.PitNumber":{"args":[],"type":"Basics.Int"},"Main.PlayerID":{"args":[],"type":"String.String"}},"unions":{"Main.Msg":{"args":[],"tags":{"Tick":["Time.Posix"],"GetGameStartTime":["Time.Posix"],"InitOrderIDs":["List.List Main.PlayerID"],"SelectHoldPit":["Main.PitNumber"],"Sowing":[],"MoveTurn":["Time.Posix"],"NextGame":[]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"List.List":{"args":["a"],"tags":{}},"String.String":{"args":[],"tags":{"String":[]}},"Time.Posix":{"args":[],"tags":{"Posix":["Basics.Int"]}}}}})}});}(this));
+	elm$json$Json$Decode$succeed(_Utils_Tuple0))({"versions":{"elm":"0.19.0"},"types":{"message":"Main.Msg","aliases":{"Main.PitNumber":{"args":[],"type":"Basics.Int"},"Main.PlayerID":{"args":[],"type":"String.String"}},"unions":{"Main.Msg":{"args":[],"tags":{"Tick":["Time.Posix"],"GetGameStartTime":["Time.Posix"],"InitOrderIDs":["List.List Main.PlayerID"],"SelectHoldPit":["Main.PitNumber"],"Sowing":[],"NextGame":[]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"List.List":{"args":["a"],"tags":{}},"String.String":{"args":[],"tags":{"String":[]}},"Time.Posix":{"args":[],"tags":{"Posix":["Basics.Int"]}}}}})}});}(this));
 
 var app = Elm.Main.init({ node: document.getElementById("elm-f0111bc4e658d0f98db96260c16f7e49") });
 if (document.getElementById("elm-f0111bc4e658d0f98db96260c16f7e49"))

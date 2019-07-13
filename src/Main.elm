@@ -167,7 +167,6 @@ type Msg
     | InitOrderIDs (List PlayerID)
     | SelectHoldPit PitNumber
     | Sowing
-    | MoveTurn Time.Posix
     | NextGame
 
 
@@ -175,7 +174,7 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         Tick posix ->
-            ( { model | nowTime = posix }, Cmd.none )
+            ( { model | nowTime = posix } |> doTimeRelatedEvents, Cmd.none )
 
         GetGameStartTime posix ->
             ( { model | turnStartTime = posix, nowTime = posix }, Cmd.none )
@@ -187,10 +186,7 @@ update msg model =
             ( selectHoldPit pitNumber model, Cmd.none )
 
         Sowing ->
-            ( sowingAtOnce model, Task.perform MoveTurn Time.now )
-
-        MoveTurn nowTime ->
-            ( moveTurn nowTime model, Cmd.none )
+            ( model |> sowingAtOnce |> moveTurn, Cmd.none )
 
         NextGame ->
             ( initGamePlayInfo dammyGameInitInfo
@@ -439,8 +435,8 @@ sowingOneStep gamePlayInfo =
             gamePlayInfo
 
 
-moveTurn : Time.Posix -> GamePlayInfo -> GamePlayInfo
-moveTurn nowTime gamePlayInfo =
+moveTurn : GamePlayInfo -> GamePlayInfo
+moveTurn gamePlayInfo =
     let
         sowedHoleNumber =
             gamePlayInfo.sowedHole
@@ -464,7 +460,7 @@ moveTurn nowTime gamePlayInfo =
                 { gamePlayInfo
                     | holdPit = Nothing
                     , sowedHole = Nothing
-                    , turnStartTime = nowTime
+                    , turnStartTime = gamePlayInfo.nowTime
                 }
 
             Pit _ ->
@@ -474,8 +470,24 @@ moveTurn nowTime gamePlayInfo =
                     , sowedHole = Nothing
                     , turnPlayerID = getNextOrderID gamePlayInfo.turnPlayerID gamePlayInfo
                     , turnCount = gamePlayInfo.turnCount + 1
-                    , turnStartTime = nowTime
+                    , turnStartTime = gamePlayInfo.nowTime
                 }
+
+
+doTimeRelatedEvents : GamePlayInfo -> GamePlayInfo
+doTimeRelatedEvents gamePlayInfo =
+    if getReminingTime gamePlayInfo == 0 then
+        -- 制限時間が過ぎていればターン交代
+        { gamePlayInfo
+            | holdPit = Nothing
+            , sowedHole = Nothing
+            , turnPlayerID = getNextOrderID gamePlayInfo.turnPlayerID gamePlayInfo
+            , turnCount = gamePlayInfo.turnCount + 1
+            , turnStartTime = gamePlayInfo.nowTime
+        }
+
+    else
+        gamePlayInfo
 
 
 
@@ -557,20 +569,25 @@ viewBoard gamePlayInfo =
         |> div []
 
 
+viewTurnPlayer : GamePlayInfo -> Html Msg
+viewTurnPlayer gamePlayInfo =
+    div [] [ text ("turnPlayer : " ++ gamePlayInfo.turnPlayerID) ]
+
+
 viewReminingTimer : GamePlayInfo -> Html Msg
 viewReminingTimer gamePlayInfo =
     let
-        reminingTime =
+        diffTime =
             getReminingTime gamePlayInfo
-    in
-    (if reminingTime < 0 then
-        0
 
-     else
-        reminingTime
-    )
-        |> String.fromInt
-        |> text
+        reminingTime =
+            if diffTime < 0 then
+                0
+
+            else
+                diffTime
+    in
+    div [] [ text ("reminingTime : " ++ String.fromInt reminingTime) ]
 
 
 viewSowingButton : GamePlayInfo -> Html Msg
@@ -619,4 +636,4 @@ view model =
             div [] [ text ("Game! Winner : " ++ winnerID), viewEndBoard model, button [ onClick NextGame ] [ text "next game" ] ]
 
         Nothing ->
-            div [] [ viewBoard model, viewSowingButton model, viewReminingTimer model ]
+            div [] [ viewTurnPlayer model, viewReminingTimer model, viewBoard model, viewSowingButton model ]
