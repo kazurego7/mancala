@@ -177,12 +177,7 @@ dammyGameInitInfo =
 
 init : () -> ( Model, Cmd Msg )
 init () =
-    ( GamePlay (initGamePlayInfo dammyGameInitInfo)
-    , Cmd.batch
-        [ Task.perform GetGameStartTime Time.now
-        , Random.generate InitOrderIDs (dammyGameInitInfo.playerIDs |> Set.toList |> Random.List.shuffle)
-        ]
-    )
+    ( GameInit dammyGameInitInfo, Cmd.none )
 
 
 
@@ -191,65 +186,61 @@ init () =
 
 type Msg
     = Tick Time.Posix
-    | GetGameStartTime Time.Posix
+    | StartGame
+    | GetTurnStartTime Time.Posix
     | InitOrderIDs (List PlayerID)
     | SelectHoldPit PitNumber
     | Sowing
-    | NextGame
+    | RestartGame
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-    case model of
-        GameInit gameInitInfo ->
-            ( GameInit gameInitInfo, Cmd.none )
+    case ( model, msg ) of
+        ( GameInit gameInitInfo, StartGame ) ->
+            ( initGamePlayInfo gameInitInfo |> GamePlay
+            , Cmd.batch
+                [ Task.perform GetTurnStartTime Time.now
+                , Random.generate InitOrderIDs (gameInitInfo.playerIDs |> Set.toList |> Random.List.shuffle)
+                ]
+            )
 
-        GamePlay gamePlayInfo ->
-            case msg of
-                Tick posix ->
-                    ( { gamePlayInfo | nowTime = posix } |> doTimeRelatedEvents |> GamePlay, Cmd.none )
+        ( GamePlay gamePlayInfo, Tick posix ) ->
+            ( { gamePlayInfo | nowTime = posix } |> doTimeRelatedEvents |> GamePlay, Cmd.none )
 
-                GetGameStartTime posix ->
-                    ( { gamePlayInfo | turnStartTime = posix, nowTime = posix } |> GamePlay, Cmd.none )
+        ( GamePlay gamePlayInfo, GetTurnStartTime posix ) ->
+            ( { gamePlayInfo | turnStartTime = posix, nowTime = posix } |> GamePlay, Cmd.none )
 
-                InitOrderIDs orderIDs ->
-                    ( initOrderIDs orderIDs gamePlayInfo |> GamePlay, Cmd.none )
+        ( GamePlay gamePlayInfo, InitOrderIDs orderIDs ) ->
+            ( initOrderIDs orderIDs gamePlayInfo |> GamePlay, Cmd.none )
 
-                SelectHoldPit pitNumber ->
-                    ( selectHoldPit pitNumber gamePlayInfo |> GamePlay, Cmd.none )
+        ( GamePlay gamePlayInfo, SelectHoldPit pitNumber ) ->
+            ( selectHoldPit pitNumber gamePlayInfo |> GamePlay, Cmd.none )
 
-                Sowing ->
-                    let
-                        turnPlayerInfo =
-                            getPlayerInfo gamePlayInfo.turnPlayerID gamePlayInfo.playerInfoTable
-                    in
-                    ( gamePlayInfo
-                        |> sowingAtOnce
-                        |> (\gameSowingInfo ->
-                                if getPlayerIsWin turnPlayerInfo then
-                                    GameEnd (moveTurn gameSowingInfo)
+        ( GamePlay gamePlayInfo, Sowing ) ->
+            let
+                turnPlayerInfo =
+                    getPlayerInfo gamePlayInfo.turnPlayerID gamePlayInfo.playerInfoTable
+            in
+            ( gamePlayInfo
+                |> sowingAtOnce
+                |> (\gameSowingInfo ->
+                        if getPlayerIsWin turnPlayerInfo then
+                            GameEnd (moveTurn gameSowingInfo)
 
-                                else
-                                    GamePlay (multiLap gameSowingInfo)
-                           )
-                    , Cmd.none
-                    )
+                        else
+                            GamePlay (multiLap gameSowingInfo)
+                   )
+            , Cmd.none
+            )
 
-                _ ->
-                    ( model, Cmd.none )
+        ( GameEnd _, RestartGame ) ->
+            ( dammyGameInitInfo |> GameInit
+            , Cmd.none
+            )
 
-        GameEnd _ ->
-            case msg of
-                NextGame ->
-                    ( initGamePlayInfo dammyGameInitInfo |> GamePlay
-                    , Cmd.batch
-                        [ Task.perform GetGameStartTime Time.now
-                        , Random.generate InitOrderIDs (dammyGameInitInfo.playerIDs |> Set.toList |> Random.List.shuffle)
-                        ]
-                    )
-
-                _ ->
-                    ( model, Cmd.none )
+        _ ->
+            ( model, Cmd.none )
 
 
 initOrderIDs : List PlayerID -> GamePlayInfo -> GamePlayInfo
@@ -687,11 +678,11 @@ viewEndBoard gameEndInfo =
 view : Model -> Html Msg
 view model =
     case model of
+        GameInit _ ->
+            button [ onClick StartGame ] [ text "game start" ]
+
         GameEnd gameEndInfo ->
-            div [] [ text ("Game! Winner : " ++ gameEndInfo.winnerID), viewEndBoard gameEndInfo, button [ onClick NextGame ] [ text "next game" ] ]
+            div [] [ text ("Game! Winner : " ++ gameEndInfo.winnerID), viewEndBoard gameEndInfo, button [ onClick RestartGame ] [ text "next game" ] ]
 
         GamePlay gamePlayInfo ->
             div [] [ viewTurnPlayer gamePlayInfo, viewReminingTimer gamePlayInfo, viewBoard gamePlayInfo, viewSowingButton gamePlayInfo ]
-
-        _ ->
-            div [] []
