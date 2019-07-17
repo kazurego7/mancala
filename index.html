@@ -7928,7 +7928,7 @@ var elm_community$random_extra$Random$List$shuffle = function (list) {
 var author$project$Main$update = F2(
 	function (msg, model) {
 		var _n0 = _Utils_Tuple2(model, msg);
-		_n0$7:
+		_n0$8:
 		while (true) {
 			switch (_n0.a.$) {
 				case 'GameInit':
@@ -7949,7 +7949,7 @@ var author$project$Main$update = F2(
 											elm$core$Set$toList(gameInitInfo.playerIDs)))
 									])));
 					} else {
-						break _n0$7;
+						break _n0$8;
 					}
 				case 'GamePlay':
 					switch (_n0.b.$) {
@@ -7999,33 +7999,40 @@ var author$project$Main$update = F2(
 									author$project$Main$sowingAtOnce(gamePlayInfo)),
 								elm$core$Platform$Cmd$none);
 						default:
-							break _n0$7;
+							break _n0$8;
 					}
 				default:
-					if (_n0.b.$ === 'RestartGame') {
-						var gameEndInfo = _n0.a.a;
-						var _n3 = _n0.b;
-						return _Utils_Tuple2(
-							author$project$Main$GamePlay(
-								author$project$Main$initGame(
-									author$project$Main$restartGame(gameEndInfo))),
-							elm$core$Platform$Cmd$batch(
-								_List_fromArray(
-									[
-										A2(elm$core$Task$perform, author$project$Main$GetTurnStartTime, elm$time$Time$now),
-										A2(
-										elm$random$Random$generate,
-										author$project$Main$InitOrderIDs,
-										elm_community$random_extra$Random$List$shuffle(
-											elm$core$Dict$keys(gameEndInfo.playerInfoTable)))
-									])));
-					} else {
-						break _n0$7;
+					switch (_n0.b.$) {
+						case 'RestartGame':
+							var gameEndInfo = _n0.a.a;
+							var _n3 = _n0.b;
+							return _Utils_Tuple2(
+								author$project$Main$GamePlay(
+									author$project$Main$initGame(
+										author$project$Main$restartGame(gameEndInfo))),
+								elm$core$Platform$Cmd$batch(
+									_List_fromArray(
+										[
+											A2(elm$core$Task$perform, author$project$Main$GetTurnStartTime, elm$time$Time$now),
+											A2(
+											elm$random$Random$generate,
+											author$project$Main$InitOrderIDs,
+											elm_community$random_extra$Random$List$shuffle(
+												elm$core$Dict$keys(gameEndInfo.playerInfoTable)))
+										])));
+						case 'InitGame':
+							var _n4 = _n0.b;
+							return _Utils_Tuple2(
+								author$project$Main$GameInit(author$project$Main$dammyGameInitInfo),
+								elm$core$Platform$Cmd$none);
+						default:
+							break _n0$8;
 					}
 			}
 		}
 		return _Utils_Tuple2(model, elm$core$Platform$Cmd$none);
 	});
+var author$project$Main$InitGame = {$: 'InitGame'};
 var author$project$Main$RestartGame = {$: 'RestartGame'};
 var author$project$Main$StartGame = {$: 'StartGame'};
 var author$project$Main$SelectHoldPit = function (a) {
@@ -8486,7 +8493,17 @@ var author$project$Main$view = function (model) {
 							]),
 						_List_fromArray(
 							[
-								elm$html$Html$text('next game')
+								elm$html$Html$text('restart game!')
+							])),
+						A2(
+						elm$html$Html$button,
+						_List_fromArray(
+							[
+								elm$html$Html$Events$onClick(author$project$Main$InitGame)
+							]),
+						_List_fromArray(
+							[
+								elm$html$Html$text('init game!')
 							]))
 					]));
 		default:
@@ -11846,7 +11863,7 @@ var elm$browser$Browser$element = _Browser_element;
 var author$project$Main$main = elm$browser$Browser$element(
 	{init: author$project$Main$init, subscriptions: author$project$Main$subscriptions, update: author$project$Main$update, view: author$project$Main$view});
 _Platform_export({'Main':{'init':author$project$Main$main(
-	elm$json$Json$Decode$succeed(_Utils_Tuple0))({"versions":{"elm":"0.19.0"},"types":{"message":"Main.Msg","aliases":{"Main.PitNumber":{"args":[],"type":"Basics.Int"},"Main.PlayerID":{"args":[],"type":"String.String"}},"unions":{"Main.Msg":{"args":[],"tags":{"Tick":["Time.Posix"],"StartGame":[],"GetTurnStartTime":["Time.Posix"],"InitOrderIDs":["List.List Main.PlayerID"],"SelectHoldPit":["Main.PitNumber"],"Sowing":[],"RestartGame":[]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"List.List":{"args":["a"],"tags":{}},"String.String":{"args":[],"tags":{"String":[]}},"Time.Posix":{"args":[],"tags":{"Posix":["Basics.Int"]}}}}})}});}(this));
+	elm$json$Json$Decode$succeed(_Utils_Tuple0))({"versions":{"elm":"0.19.0"},"types":{"message":"Main.Msg","aliases":{"Main.PitNumber":{"args":[],"type":"Basics.Int"},"Main.PlayerID":{"args":[],"type":"String.String"}},"unions":{"Main.Msg":{"args":[],"tags":{"Tick":["Time.Posix"],"StartGame":[],"GetTurnStartTime":["Time.Posix"],"InitOrderIDs":["List.List Main.PlayerID"],"SelectHoldPit":["Main.PitNumber"],"Sowing":[],"RestartGame":[],"InitGame":[]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"List.List":{"args":["a"],"tags":{}},"String.String":{"args":[],"tags":{"String":[]}},"Time.Posix":{"args":[],"tags":{"Posix":["Basics.Int"]}}}}})}});}(this));
 
 var app = Elm.Main.init({ node: document.getElementById("elm-f0111bc4e658d0f98db96260c16f7e49") });
 if (document.getElementById("elm-f0111bc4e658d0f98db96260c16f7e49"))
