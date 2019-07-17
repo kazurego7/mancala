@@ -92,21 +92,11 @@ type alias NextOrderIDTable =
     Dict PlayerID PlayerID
 
 
-type alias GameEndInfo =
-    { playerInfoTable : PlayerInfoTable
-    , nextOrderIDTable : NextOrderIDTable
-    , pitCount : Int
-    , cliantID : PlayerID
-    , turnCount : Int
-    , reminingTime : Int
-    , winnerID : PlayerID
-    }
-
-
 type alias GamePlayInfo =
     { playerInfoTable : PlayerInfoTable
     , nextOrderIDTable : NextOrderIDTable
     , pitCount : Int
+    , initSeedCount : Int
     , cliantID : PlayerID
     , turnPlayerID : PlayerID
     , turnCount : Int
@@ -115,6 +105,19 @@ type alias GamePlayInfo =
     , timeLimitForSecond : Int
     , holdPit : Maybe HoldPitInfo
     , sowedHole : Maybe SowedInfo
+    }
+
+
+type alias GameEndInfo =
+    { playerInfoTable : PlayerInfoTable
+    , nextOrderIDTable : NextOrderIDTable
+    , pitCount : Int
+    , initSeedCount : Int
+    , cliantID : PlayerID
+    , turnCount : Int
+    , reminingTime : Int
+    , timeLimitForSecond : Int
+    , winnerID : PlayerID
     }
 
 
@@ -192,13 +195,14 @@ type Msg
     | SelectHoldPit PitNumber
     | Sowing
     | RestartGame
+    | InitGame
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case ( model, msg ) of
         ( GameInit gameInitInfo, StartGame ) ->
-            ( initGamePlayInfo gameInitInfo |> GamePlay
+            ( initGame gameInitInfo |> GamePlay
             , Cmd.batch
                 [ Task.perform GetTurnStartTime Time.now
                 , Random.generate InitOrderIDs (gameInitInfo.playerIDs |> Set.toList |> Random.List.shuffle)
@@ -226,18 +230,24 @@ update msg model =
                 |> sowingAtOnce
                 |> (\gameSowingInfo ->
                         if getPlayerIsWin turnPlayerInfo then
-                            GameEnd (moveTurn gameSowingInfo)
+                            GameEnd (toGameEnd gameSowingInfo)
 
                         else
-                            GamePlay (multiLap gameSowingInfo)
+                            GamePlay (moveTurn gameSowingInfo)
                    )
             , Cmd.none
             )
 
-        ( GameEnd _, RestartGame ) ->
-            ( dammyGameInitInfo |> GameInit
-            , Cmd.none
+        ( GameEnd gameEndInfo, RestartGame ) ->
+            ( gameEndInfo |> restartGame |> initGame |> GamePlay
+            , Cmd.batch
+                [ Task.perform GetTurnStartTime Time.now
+                , Random.generate InitOrderIDs (gameEndInfo.playerInfoTable |> Dict.keys |> Random.List.shuffle)
+                ]
             )
+
+        ( GameEnd _, InitGame ) ->
+            ( dammyGameInitInfo |> GameInit, Cmd.none )
 
         _ ->
             ( model, Cmd.none )
@@ -274,8 +284,8 @@ initOrderIDs orderIDs gamePlayInfo =
     }
 
 
-initGamePlayInfo : GameInitInfo -> GamePlayInfo
-initGamePlayInfo gameInitInfo =
+initGame : GameInitInfo -> GamePlayInfo
+initGame gameInitInfo =
     let
         initPlayerInfo : PlayerID -> PlayerInfo
         initPlayerInfo playerID =
@@ -295,6 +305,7 @@ initGamePlayInfo gameInitInfo =
             |> List.map (\playerID -> ( playerID, initPlayerInfo playerID ))
             |> Dict.fromList
     , pitCount = gameInitInfo.pitCount
+    , initSeedCount = gameInitInfo.initSeedCount
     , turnCount = 1
     , timeLimitForSecond = gameInitInfo.timeLimitForSecond
     , nextOrderIDTable = Dict.empty
@@ -480,20 +491,22 @@ sowingOneStep gamePlayInfo =
             gamePlayInfo
 
 
-moveTurn : GamePlayInfo -> GameEndInfo
-moveTurn gamePlayInfo =
+toGameEnd : GamePlayInfo -> GameEndInfo
+toGameEnd gamePlayInfo =
     { playerInfoTable = gamePlayInfo.playerInfoTable
     , nextOrderIDTable = gamePlayInfo.nextOrderIDTable
     , pitCount = gamePlayInfo.pitCount
+    , initSeedCount = gamePlayInfo.initSeedCount
     , cliantID = gamePlayInfo.cliantID
     , turnCount = gamePlayInfo.turnCount
     , reminingTime = getReminingTime gamePlayInfo.turnStartTime gamePlayInfo.nowTime gamePlayInfo.timeLimitForSecond
+    , timeLimitForSecond = gamePlayInfo.timeLimitForSecond
     , winnerID = gamePlayInfo.turnPlayerID
     }
 
 
-multiLap : GamePlayInfo -> GamePlayInfo
-multiLap gamePlayInfo =
+moveTurn : GamePlayInfo -> GamePlayInfo
+moveTurn gamePlayInfo =
     let
         sowedHoleNumber =
             gamePlayInfo.sowedHole
@@ -534,6 +547,15 @@ doTimeRelatedEvents gamePlayInfo =
 
     else
         gamePlayInfo
+
+
+restartGame : GameEndInfo -> GameInitInfo
+restartGame gameEndInfo =
+    { playerIDs = gameEndInfo.playerInfoTable |> Dict.keys |> Set.fromList
+    , pitCount = gameEndInfo.pitCount
+    , initSeedCount = gameEndInfo.initSeedCount
+    , timeLimitForSecond = gameEndInfo.timeLimitForSecond
+    }
 
 
 
@@ -682,7 +704,12 @@ view model =
             button [ onClick StartGame ] [ text "game start" ]
 
         GameEnd gameEndInfo ->
-            div [] [ text ("Game! Winner : " ++ gameEndInfo.winnerID), viewEndBoard gameEndInfo, button [ onClick RestartGame ] [ text "next game" ] ]
+            div []
+                [ text ("Game! Winner : " ++ gameEndInfo.winnerID)
+                , viewEndBoard gameEndInfo
+                , button [ onClick RestartGame ] [ text "restart game!" ]
+                , button [ onClick InitGame ] [ text "init game!" ]
+                ]
 
         GamePlay gamePlayInfo ->
             div [] [ viewTurnPlayer gamePlayInfo, viewReminingTimer gamePlayInfo, viewBoard gamePlayInfo, viewSowingButton gamePlayInfo ]

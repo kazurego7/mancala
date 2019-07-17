@@ -6778,7 +6778,7 @@ var elm$core$List$repeat = F2(
 	function (n, value) {
 		return A3(elm$core$List$repeatHelp, _List_Nil, n, value);
 	});
-var author$project$Main$initGamePlayInfo = function (gameInitInfo) {
+var author$project$Main$initGame = function (gameInitInfo) {
 	var playerIDs = elm$core$Set$toList(gameInitInfo.playerIDs);
 	var initPlayerInfo = function (playerID) {
 		return {
@@ -6794,6 +6794,7 @@ var author$project$Main$initGamePlayInfo = function (gameInitInfo) {
 	return {
 		cliantID: author$project$Main$defaultPlayerID,
 		holdPit: elm$core$Maybe$Nothing,
+		initSeedCount: gameInitInfo.initSeedCount,
 		nextOrderIDTable: elm$core$Dict$empty,
 		nowTime: elm$time$Time$millisToPosix(0),
 		pitCount: gameInitInfo.pitCount,
@@ -6884,21 +6885,10 @@ var author$project$Main$initOrderIDs = F2(
 					elm$core$List$head(orderIDs))
 			});
 	});
-var author$project$Main$moveTurn = function (gamePlayInfo) {
-	return {
-		cliantID: gamePlayInfo.cliantID,
-		nextOrderIDTable: gamePlayInfo.nextOrderIDTable,
-		pitCount: gamePlayInfo.pitCount,
-		playerInfoTable: gamePlayInfo.playerInfoTable,
-		reminingTime: A3(author$project$Main$getReminingTime, gamePlayInfo.turnStartTime, gamePlayInfo.nowTime, gamePlayInfo.timeLimitForSecond),
-		turnCount: gamePlayInfo.turnCount,
-		winnerID: gamePlayInfo.turnPlayerID
-	};
-};
 var author$project$Main$Pit = function (a) {
 	return {$: 'Pit', a: a};
 };
-var author$project$Main$multiLap = function (gamePlayInfo) {
+var author$project$Main$moveTurn = function (gamePlayInfo) {
 	var sowedHoleNumber = A2(
 		elm$core$Maybe$withDefault,
 		author$project$Main$Pit(-1),
@@ -6923,6 +6913,18 @@ var author$project$Main$multiLap = function (gamePlayInfo) {
 				turnStartTime: gamePlayInfo.nowTime
 			});
 	}
+};
+var elm$core$Set$fromList = function (list) {
+	return A3(elm$core$List$foldl, elm$core$Set$insert, elm$core$Set$empty, list);
+};
+var author$project$Main$restartGame = function (gameEndInfo) {
+	return {
+		initSeedCount: gameEndInfo.initSeedCount,
+		pitCount: gameEndInfo.pitCount,
+		playerIDs: elm$core$Set$fromList(
+			elm$core$Dict$keys(gameEndInfo.playerInfoTable)),
+		timeLimitForSecond: gameEndInfo.timeLimitForSecond
+	};
 };
 var elm$core$Bitwise$shiftRightZfBy = _Bitwise_shiftRightZfBy;
 var elm$core$Array$bitMask = 4294967295 >>> (32 - elm$core$Array$shiftStep);
@@ -7583,6 +7585,19 @@ var author$project$Main$sowingAtOnce = function (gamePlayInfo) {
 		return gamePlayInfo;
 	}
 };
+var author$project$Main$toGameEnd = function (gamePlayInfo) {
+	return {
+		cliantID: gamePlayInfo.cliantID,
+		initSeedCount: gamePlayInfo.initSeedCount,
+		nextOrderIDTable: gamePlayInfo.nextOrderIDTable,
+		pitCount: gamePlayInfo.pitCount,
+		playerInfoTable: gamePlayInfo.playerInfoTable,
+		reminingTime: A3(author$project$Main$getReminingTime, gamePlayInfo.turnStartTime, gamePlayInfo.nowTime, gamePlayInfo.timeLimitForSecond),
+		timeLimitForSecond: gamePlayInfo.timeLimitForSecond,
+		turnCount: gamePlayInfo.turnCount,
+		winnerID: gamePlayInfo.turnPlayerID
+	};
+};
 var elm$core$Task$Perform = function (a) {
 	return {$: 'Perform', a: a};
 };
@@ -7922,7 +7937,7 @@ var author$project$Main$update = F2(
 						var _n1 = _n0.b;
 						return _Utils_Tuple2(
 							author$project$Main$GamePlay(
-								author$project$Main$initGamePlayInfo(gameInitInfo)),
+								author$project$Main$initGame(gameInitInfo)),
 							elm$core$Platform$Cmd$batch(
 								_List_fromArray(
 									[
@@ -7978,8 +7993,8 @@ var author$project$Main$update = F2(
 							return _Utils_Tuple2(
 								function (gameSowingInfo) {
 									return author$project$Main$getPlayerIsWin(turnPlayerInfo) ? author$project$Main$GameEnd(
-										author$project$Main$moveTurn(gameSowingInfo)) : author$project$Main$GamePlay(
-										author$project$Main$multiLap(gameSowingInfo));
+										author$project$Main$toGameEnd(gameSowingInfo)) : author$project$Main$GamePlay(
+										author$project$Main$moveTurn(gameSowingInfo));
 								}(
 									author$project$Main$sowingAtOnce(gamePlayInfo)),
 								elm$core$Platform$Cmd$none);
@@ -7988,10 +8003,22 @@ var author$project$Main$update = F2(
 					}
 				default:
 					if (_n0.b.$ === 'RestartGame') {
+						var gameEndInfo = _n0.a.a;
 						var _n3 = _n0.b;
 						return _Utils_Tuple2(
-							author$project$Main$GameInit(author$project$Main$dammyGameInitInfo),
-							elm$core$Platform$Cmd$none);
+							author$project$Main$GamePlay(
+								author$project$Main$initGame(
+									author$project$Main$restartGame(gameEndInfo))),
+							elm$core$Platform$Cmd$batch(
+								_List_fromArray(
+									[
+										A2(elm$core$Task$perform, author$project$Main$GetTurnStartTime, elm$time$Time$now),
+										A2(
+										elm$random$Random$generate,
+										author$project$Main$InitOrderIDs,
+										elm_community$random_extra$Random$List$shuffle(
+											elm$core$Dict$keys(gameEndInfo.playerInfoTable)))
+									])));
 					} else {
 						break _n0$7;
 					}
