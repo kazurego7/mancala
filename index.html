@@ -7989,12 +7989,12 @@ var author$project$Main$update = F2(
 						case 'Sowing':
 							var gamePlayInfo = _n0.a.a;
 							var _n2 = _n0.b;
-							var turnPlayerInfo = A2(author$project$Main$getPlayerInfo, gamePlayInfo.turnPlayerID, gamePlayInfo.playerInfoTable);
 							return _Utils_Tuple2(
-								function (gameSowingInfo) {
+								function (gameSowedInfo) {
+									var turnPlayerInfo = A2(author$project$Main$getPlayerInfo, gameSowedInfo.turnPlayerID, gameSowedInfo.playerInfoTable);
 									return author$project$Main$getPlayerIsWin(turnPlayerInfo) ? author$project$Main$GameEnd(
-										author$project$Main$toGameEnd(gameSowingInfo)) : author$project$Main$GamePlay(
-										author$project$Main$moveTurn(gameSowingInfo));
+										author$project$Main$toGameEnd(gameSowedInfo)) : author$project$Main$GamePlay(
+										author$project$Main$moveTurn(gameSowedInfo));
 								}(
 									author$project$Main$sowingAtOnce(gamePlayInfo)),
 								elm$core$Platform$Cmd$none);

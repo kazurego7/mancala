@@ -222,18 +222,18 @@ update msg model =
             ( selectHoldPit pitNumber gamePlayInfo |> GamePlay, Cmd.none )
 
         ( GamePlay gamePlayInfo, Sowing ) ->
-            let
-                turnPlayerInfo =
-                    getPlayerInfo gamePlayInfo.turnPlayerID gamePlayInfo.playerInfoTable
-            in
             ( gamePlayInfo
                 |> sowingAtOnce
-                |> (\gameSowingInfo ->
+                |> (\gameSowedInfo ->
+                        let
+                            turnPlayerInfo =
+                                getPlayerInfo gameSowedInfo.turnPlayerID gameSowedInfo.playerInfoTable
+                        in
                         if getPlayerIsWin turnPlayerInfo then
-                            GameEnd (toGameEnd gameSowingInfo)
+                            GameEnd (toGameEnd gameSowedInfo)
 
                         else
-                            GamePlay (moveTurn gameSowingInfo)
+                            GamePlay (moveTurn gameSowedInfo)
                    )
             , Cmd.none
             )
