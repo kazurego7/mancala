@@ -252,6 +252,21 @@ update msg model =
         _ ->
             ( model, Cmd.none )
 
+-- TODO PlayerIDがSetでは表示の際に登録順にならないためListにする
+entryPlayer : String -> Int -> GameInitInfo -> GameInitInfo
+entryPlayer playerName playerNumber gameInitInfo =
+    let
+        entryPlayerID =
+            playerName ++ "@" ++ String.fromInt playerNumber
+    in
+    { gameInitInfo | playerIDs = Set.insert entryPlayerID gameInitInfo.playerIDs }
+
+
+exitPlayer : PlayerID -> GameInitInfo -> GameInitInfo
+exitPlayer exitPlayerID gameInitInfo =
+    { gameInitInfo | playerIDs = Set.remove exitPlayerID gameInitInfo.playerIDs }
+
+
 
 initOrderIDs : List PlayerID -> GamePlayInfo -> GamePlayInfo
 initOrderIDs orderIDs gamePlayInfo =
@@ -701,7 +716,10 @@ view : Model -> Html Msg
 view model =
     case model of
         GameInit _ ->
-            button [ onClick StartGame ] [ text "game start" ]
+            div []
+                -- TODO ゲームの初期設定用ボタンの追加
+                [ button [ onClick StartGame ] [ text "game start" ]
+                ]
 
         GameEnd gameEndInfo ->
             div []
@@ -712,4 +730,9 @@ view model =
                 ]
 
         GamePlay gamePlayInfo ->
-            div [] [ viewTurnPlayer gamePlayInfo, viewReminingTimer gamePlayInfo, viewBoard gamePlayInfo, viewSowingButton gamePlayInfo ]
+            div []
+                [ viewTurnPlayer gamePlayInfo
+                , viewReminingTimer gamePlayInfo
+                , viewBoard gamePlayInfo
+                , viewSowingButton gamePlayInfo
+                ]
