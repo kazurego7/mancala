@@ -41,7 +41,7 @@ defaultPlayerID =
 
 
 type alias GameInitInfo =
-    { playerIDs : Set PlayerID
+    { playerIDs : List PlayerID
     , pitCount : Int
     , initSeedCount : Int
     , timeLimitForSecond : Int
@@ -171,7 +171,7 @@ type Model
 
 dammyGameInitInfo : GameInitInfo
 dammyGameInitInfo =
-    { playerIDs = Set.empty |> Set.insert "foo" |> Set.insert "bar"
+    { playerIDs = [ "foo", "bar" ]
     , pitCount = 3
     , initSeedCount = 4
     , timeLimitForSecond = 40
@@ -205,7 +205,7 @@ update msg model =
             ( initGame gameInitInfo |> GamePlay
             , Cmd.batch
                 [ Task.perform GetTurnStartTime Time.now
-                , Random.generate InitOrderIDs (gameInitInfo.playerIDs |> Set.toList |> Random.List.shuffle)
+                , Random.generate InitOrderIDs (gameInitInfo.playerIDs |> Random.List.shuffle)
                 ]
             )
 
@@ -252,20 +252,19 @@ update msg model =
         _ ->
             ( model, Cmd.none )
 
--- TODO PlayerIDがSetでは表示の際に登録順にならないためListにする
+
 entryPlayer : String -> Int -> GameInitInfo -> GameInitInfo
 entryPlayer playerName playerNumber gameInitInfo =
     let
         entryPlayerID =
             playerName ++ "@" ++ String.fromInt playerNumber
     in
-    { gameInitInfo | playerIDs = Set.insert entryPlayerID gameInitInfo.playerIDs }
+    { gameInitInfo | playerIDs = entryPlayerID :: gameInitInfo.playerIDs }
 
 
 exitPlayer : PlayerID -> GameInitInfo -> GameInitInfo
 exitPlayer exitPlayerID gameInitInfo =
-    { gameInitInfo | playerIDs = Set.remove exitPlayerID gameInitInfo.playerIDs }
-
+    { gameInitInfo | playerIDs = List.Extra.remove exitPlayerID gameInitInfo.playerIDs }
 
 
 initOrderIDs : List PlayerID -> GamePlayInfo -> GamePlayInfo
@@ -313,7 +312,7 @@ initGame gameInitInfo =
             }
 
         playerIDs =
-            gameInitInfo.playerIDs |> Set.toList
+            gameInitInfo.playerIDs
     in
     { playerInfoTable =
         playerIDs
@@ -566,7 +565,7 @@ doTimeRelatedEvents gamePlayInfo =
 
 restartGame : GameEndInfo -> GameInitInfo
 restartGame gameEndInfo =
-    { playerIDs = gameEndInfo.playerInfoTable |> Dict.keys |> Set.fromList
+    { playerIDs = gameEndInfo.playerInfoTable |> Dict.keys
     , pitCount = gameEndInfo.pitCount
     , initSeedCount = gameEndInfo.initSeedCount
     , timeLimitForSecond = gameEndInfo.timeLimitForSecond
