@@ -42,6 +42,7 @@ defaultPlayerID =
 
 type alias GameInitInfo =
     { playerIDs : List PlayerID
+    , entryPlayerName : String
     , pitCount : Int
     , initSeedCount : Int
     , timeLimitForSecond : Int
@@ -171,7 +172,8 @@ type Model
 
 dammyGameInitInfo : GameInitInfo
 dammyGameInitInfo =
-    { playerIDs = [ "foo", "bar" ]
+    { playerIDs = []
+    , entryPlayerName = ""
     , pitCount = 3
     , initSeedCount = 4
     , timeLimitForSecond = 40
@@ -189,6 +191,9 @@ init () =
 
 type Msg
     = Tick Time.Posix
+    | InputPlayerName String
+    | EntryPlayer PlayerID
+    | ExitPlayer PlayerID
     | StartGame
     | GetTurnStartTime Time.Posix
     | InitOrderIDs (List PlayerID)
@@ -201,6 +206,15 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case ( model, msg ) of
+        ( GameInit gameInitInfo, InputPlayerName playerName ) ->
+            ( { gameInitInfo | entryPlayerName = playerName } |> GameInit, Cmd.none )
+
+        ( GameInit gameInitInfo, EntryPlayer playerID ) ->
+            ( gameInitInfo |> entryPlayer playerID |> GameInit, Cmd.none )
+
+        ( GameInit gameInitInfo, ExitPlayer playerID ) ->
+            ( gameInitInfo |> exitPlayer playerID |> GameInit, Cmd.none )
+
         ( GameInit gameInitInfo, StartGame ) ->
             ( initGame gameInitInfo |> GamePlay
             , Cmd.batch
@@ -253,13 +267,9 @@ update msg model =
             ( model, Cmd.none )
 
 
-entryPlayer : String -> Int -> GameInitInfo -> GameInitInfo
-entryPlayer playerName playerNumber gameInitInfo =
-    let
-        entryPlayerID =
-            playerName ++ "@" ++ String.fromInt playerNumber
-    in
-    { gameInitInfo | playerIDs = entryPlayerID :: gameInitInfo.playerIDs }
+entryPlayer : PlayerID -> GameInitInfo -> GameInitInfo
+entryPlayer playerID gameInitInfo =
+    { gameInitInfo | playerIDs = List.append gameInitInfo.playerIDs [ playerID ], entryPlayerName = "" }
 
 
 exitPlayer : PlayerID -> GameInitInfo -> GameInitInfo
@@ -566,6 +576,7 @@ doTimeRelatedEvents gamePlayInfo =
 restartGame : GameEndInfo -> GameInitInfo
 restartGame gameEndInfo =
     { playerIDs = gameEndInfo.playerInfoTable |> Dict.keys
+    , entryPlayerName = ""
     , pitCount = gameEndInfo.pitCount
     , initSeedCount = gameEndInfo.initSeedCount
     , timeLimitForSecond = gameEndInfo.timeLimitForSecond
@@ -583,6 +594,42 @@ subscriptions _ =
 
 
 -- VIEW
+
+
+viewPlayerIDs : GameInitInfo -> Html Msg
+viewPlayerIDs gameInitInfo =
+    let
+        viewPlayerID : PlayerID -> Html Msg
+        viewPlayerID playerID =
+            div [] [ text playerID, button [ onClick (ExitPlayer playerID) ] [ text "-" ] ]
+    in
+    div [] (gameInitInfo.playerIDs |> List.map viewPlayerID)
+
+
+viewEntryPlayer : GameInitInfo -> Html Msg
+viewEntryPlayer gameInitInfo =
+    let
+        playerNumber =
+            gameInitInfo.playerIDs
+                |> List.length
+                |> String.fromInt
+
+        entryPlayerID =
+            gameInitInfo.entryPlayerName ++ "@" ++ playerNumber
+    in
+    div []
+        [ input [ value gameInitInfo.entryPlayerName, onInput InputPlayerName ] []
+        , button [ onClick (EntryPlayer entryPlayerID) ] [ text "+" ]
+        ]
+
+
+viewStartButton : GameInitInfo -> Html Msg
+viewStartButton gameInitInfo =
+    if List.length gameInitInfo.playerIDs < 2 then
+        div [] []
+
+    else
+        button [ onClick StartGame ] [ text "game start" ]
 
 
 viewBoard : GamePlayInfo -> Html Msg
@@ -714,10 +761,12 @@ viewEndBoard gameEndInfo =
 view : Model -> Html Msg
 view model =
     case model of
-        GameInit _ ->
+        GameInit gameInitInfo ->
             div []
                 -- TODO ゲームの初期設定用ボタンの追加
-                [ button [ onClick StartGame ] [ text "game start" ]
+                [ viewPlayerIDs gameInitInfo
+                , viewEntryPlayer gameInitInfo
+                , viewStartButton gameInitInfo
                 ]
 
         GameEnd gameEndInfo ->

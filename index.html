@@ -242,87 +242,6 @@ var _JsArray_appendN = F3(function(n, dest, source)
 
 
 
-var _List_Nil_UNUSED = { $: 0 };
-var _List_Nil = { $: '[]' };
-
-function _List_Cons_UNUSED(hd, tl) { return { $: 1, a: hd, b: tl }; }
-function _List_Cons(hd, tl) { return { $: '::', a: hd, b: tl }; }
-
-
-var _List_cons = F2(_List_Cons);
-
-function _List_fromArray(arr)
-{
-	var out = _List_Nil;
-	for (var i = arr.length; i--; )
-	{
-		out = _List_Cons(arr[i], out);
-	}
-	return out;
-}
-
-function _List_toArray(xs)
-{
-	for (var out = []; xs.b; xs = xs.b) // WHILE_CONS
-	{
-		out.push(xs.a);
-	}
-	return out;
-}
-
-var _List_map2 = F3(function(f, xs, ys)
-{
-	for (var arr = []; xs.b && ys.b; xs = xs.b, ys = ys.b) // WHILE_CONSES
-	{
-		arr.push(A2(f, xs.a, ys.a));
-	}
-	return _List_fromArray(arr);
-});
-
-var _List_map3 = F4(function(f, xs, ys, zs)
-{
-	for (var arr = []; xs.b && ys.b && zs.b; xs = xs.b, ys = ys.b, zs = zs.b) // WHILE_CONSES
-	{
-		arr.push(A3(f, xs.a, ys.a, zs.a));
-	}
-	return _List_fromArray(arr);
-});
-
-var _List_map4 = F5(function(f, ws, xs, ys, zs)
-{
-	for (var arr = []; ws.b && xs.b && ys.b && zs.b; ws = ws.b, xs = xs.b, ys = ys.b, zs = zs.b) // WHILE_CONSES
-	{
-		arr.push(A4(f, ws.a, xs.a, ys.a, zs.a));
-	}
-	return _List_fromArray(arr);
-});
-
-var _List_map5 = F6(function(f, vs, ws, xs, ys, zs)
-{
-	for (var arr = []; vs.b && ws.b && xs.b && ys.b && zs.b; vs = vs.b, ws = ws.b, xs = xs.b, ys = ys.b, zs = zs.b) // WHILE_CONSES
-	{
-		arr.push(A5(f, vs.a, ws.a, xs.a, ys.a, zs.a));
-	}
-	return _List_fromArray(arr);
-});
-
-var _List_sortBy = F2(function(f, xs)
-{
-	return _List_fromArray(_List_toArray(xs).sort(function(a, b) {
-		return _Utils_cmp(f(a), f(b));
-	}));
-});
-
-var _List_sortWith = F2(function(f, xs)
-{
-	return _List_fromArray(_List_toArray(xs).sort(function(a, b) {
-		var ord = A2(f, a, b);
-		return ord === elm$core$Basics$EQ ? 0 : ord === elm$core$Basics$LT ? -1 : 1;
-	}));
-});
-
-
-
 // LOG
 
 var _Debug_log_UNUSED = F2(function(tag, value)
@@ -800,6 +719,87 @@ function _Utils_ap(xs, ys)
 	}
 	return root;
 }
+
+
+
+var _List_Nil_UNUSED = { $: 0 };
+var _List_Nil = { $: '[]' };
+
+function _List_Cons_UNUSED(hd, tl) { return { $: 1, a: hd, b: tl }; }
+function _List_Cons(hd, tl) { return { $: '::', a: hd, b: tl }; }
+
+
+var _List_cons = F2(_List_Cons);
+
+function _List_fromArray(arr)
+{
+	var out = _List_Nil;
+	for (var i = arr.length; i--; )
+	{
+		out = _List_Cons(arr[i], out);
+	}
+	return out;
+}
+
+function _List_toArray(xs)
+{
+	for (var out = []; xs.b; xs = xs.b) // WHILE_CONS
+	{
+		out.push(xs.a);
+	}
+	return out;
+}
+
+var _List_map2 = F3(function(f, xs, ys)
+{
+	for (var arr = []; xs.b && ys.b; xs = xs.b, ys = ys.b) // WHILE_CONSES
+	{
+		arr.push(A2(f, xs.a, ys.a));
+	}
+	return _List_fromArray(arr);
+});
+
+var _List_map3 = F4(function(f, xs, ys, zs)
+{
+	for (var arr = []; xs.b && ys.b && zs.b; xs = xs.b, ys = ys.b, zs = zs.b) // WHILE_CONSES
+	{
+		arr.push(A3(f, xs.a, ys.a, zs.a));
+	}
+	return _List_fromArray(arr);
+});
+
+var _List_map4 = F5(function(f, ws, xs, ys, zs)
+{
+	for (var arr = []; ws.b && xs.b && ys.b && zs.b; ws = ws.b, xs = xs.b, ys = ys.b, zs = zs.b) // WHILE_CONSES
+	{
+		arr.push(A4(f, ws.a, xs.a, ys.a, zs.a));
+	}
+	return _List_fromArray(arr);
+});
+
+var _List_map5 = F6(function(f, vs, ws, xs, ys, zs)
+{
+	for (var arr = []; vs.b && ws.b && xs.b && ys.b && zs.b; vs = vs.b, ws = ws.b, xs = xs.b, ys = ys.b, zs = zs.b) // WHILE_CONSES
+	{
+		arr.push(A5(f, vs.a, ws.a, xs.a, ys.a, zs.a));
+	}
+	return _List_fromArray(arr);
+});
+
+var _List_sortBy = F2(function(f, xs)
+{
+	return _List_fromArray(_List_toArray(xs).sort(function(a, b) {
+		return _Utils_cmp(f(a), f(b));
+	}));
+});
+
+var _List_sortWith = F2(function(f, xs)
+{
+	return _List_fromArray(_List_toArray(xs).sort(function(a, b) {
+		var ord = A2(f, a, b);
+		return ord === elm$core$Basics$EQ ? 0 : ord === elm$core$Basics$LT ? -1 : 1;
+	}));
+});
 
 
 
@@ -4929,24 +4929,8 @@ function _Browser_load(url)
 var author$project$Main$GameInit = function (a) {
 	return {$: 'GameInit', a: a};
 };
-var elm$core$Basics$apR = F2(
-	function (x, f) {
-		return f(x);
-	});
-var elm$core$Basics$identity = function (x) {
-	return x;
-};
-var elm$core$Dict$RBEmpty_elm_builtin = {$: 'RBEmpty_elm_builtin'};
-var elm$core$Dict$empty = elm$core$Dict$RBEmpty_elm_builtin;
-var elm$core$Set$Set_elm_builtin = function (a) {
-	return {$: 'Set_elm_builtin', a: a};
-};
-var elm$core$Set$empty = elm$core$Set$Set_elm_builtin(elm$core$Dict$empty);
-var elm$core$Dict$Black = {$: 'Black'};
-var elm$core$Dict$RBNode_elm_builtin = F5(
-	function (a, b, c, d, e) {
-		return {$: 'RBNode_elm_builtin', a: a, b: b, c: c, d: d, e: e};
-	});
+var elm$core$Basics$EQ = {$: 'EQ'};
+var elm$core$Basics$LT = {$: 'LT'};
 var elm$core$Elm$JsArray$foldr = _JsArray_foldr;
 var elm$core$Array$foldr = F3(
 	function (func, baseCase, _n0) {
@@ -4968,8 +4952,6 @@ var elm$core$Array$foldr = F3(
 			A3(elm$core$Elm$JsArray$foldr, func, baseCase, tail),
 			tree);
 	});
-var elm$core$Basics$EQ = {$: 'EQ'};
-var elm$core$Basics$LT = {$: 'LT'};
 var elm$core$List$cons = _List_cons;
 var elm$core$Array$toList = function (array) {
 	return A3(elm$core$Array$foldr, elm$core$List$cons, _List_Nil, array);
@@ -5027,125 +5009,7 @@ var elm$core$Set$toList = function (_n0) {
 	var dict = _n0.a;
 	return elm$core$Dict$keys(dict);
 };
-var elm$core$Basics$compare = _Utils_compare;
-var elm$core$Dict$Red = {$: 'Red'};
-var elm$core$Dict$balance = F5(
-	function (color, key, value, left, right) {
-		if ((right.$ === 'RBNode_elm_builtin') && (right.a.$ === 'Red')) {
-			var _n1 = right.a;
-			var rK = right.b;
-			var rV = right.c;
-			var rLeft = right.d;
-			var rRight = right.e;
-			if ((left.$ === 'RBNode_elm_builtin') && (left.a.$ === 'Red')) {
-				var _n3 = left.a;
-				var lK = left.b;
-				var lV = left.c;
-				var lLeft = left.d;
-				var lRight = left.e;
-				return A5(
-					elm$core$Dict$RBNode_elm_builtin,
-					elm$core$Dict$Red,
-					key,
-					value,
-					A5(elm$core$Dict$RBNode_elm_builtin, elm$core$Dict$Black, lK, lV, lLeft, lRight),
-					A5(elm$core$Dict$RBNode_elm_builtin, elm$core$Dict$Black, rK, rV, rLeft, rRight));
-			} else {
-				return A5(
-					elm$core$Dict$RBNode_elm_builtin,
-					color,
-					rK,
-					rV,
-					A5(elm$core$Dict$RBNode_elm_builtin, elm$core$Dict$Red, key, value, left, rLeft),
-					rRight);
-			}
-		} else {
-			if ((((left.$ === 'RBNode_elm_builtin') && (left.a.$ === 'Red')) && (left.d.$ === 'RBNode_elm_builtin')) && (left.d.a.$ === 'Red')) {
-				var _n5 = left.a;
-				var lK = left.b;
-				var lV = left.c;
-				var _n6 = left.d;
-				var _n7 = _n6.a;
-				var llK = _n6.b;
-				var llV = _n6.c;
-				var llLeft = _n6.d;
-				var llRight = _n6.e;
-				var lRight = left.e;
-				return A5(
-					elm$core$Dict$RBNode_elm_builtin,
-					elm$core$Dict$Red,
-					lK,
-					lV,
-					A5(elm$core$Dict$RBNode_elm_builtin, elm$core$Dict$Black, llK, llV, llLeft, llRight),
-					A5(elm$core$Dict$RBNode_elm_builtin, elm$core$Dict$Black, key, value, lRight, right));
-			} else {
-				return A5(elm$core$Dict$RBNode_elm_builtin, color, key, value, left, right);
-			}
-		}
-	});
-var elm$core$Dict$insertHelp = F3(
-	function (key, value, dict) {
-		if (dict.$ === 'RBEmpty_elm_builtin') {
-			return A5(elm$core$Dict$RBNode_elm_builtin, elm$core$Dict$Red, key, value, elm$core$Dict$RBEmpty_elm_builtin, elm$core$Dict$RBEmpty_elm_builtin);
-		} else {
-			var nColor = dict.a;
-			var nKey = dict.b;
-			var nValue = dict.c;
-			var nLeft = dict.d;
-			var nRight = dict.e;
-			var _n1 = A2(elm$core$Basics$compare, key, nKey);
-			switch (_n1.$) {
-				case 'LT':
-					return A5(
-						elm$core$Dict$balance,
-						nColor,
-						nKey,
-						nValue,
-						A3(elm$core$Dict$insertHelp, key, value, nLeft),
-						nRight);
-				case 'EQ':
-					return A5(elm$core$Dict$RBNode_elm_builtin, nColor, nKey, value, nLeft, nRight);
-				default:
-					return A5(
-						elm$core$Dict$balance,
-						nColor,
-						nKey,
-						nValue,
-						nLeft,
-						A3(elm$core$Dict$insertHelp, key, value, nRight));
-			}
-		}
-	});
-var elm$core$Dict$insert = F3(
-	function (key, value, dict) {
-		var _n0 = A3(elm$core$Dict$insertHelp, key, value, dict);
-		if ((_n0.$ === 'RBNode_elm_builtin') && (_n0.a.$ === 'Red')) {
-			var _n1 = _n0.a;
-			var k = _n0.b;
-			var v = _n0.c;
-			var l = _n0.d;
-			var r = _n0.e;
-			return A5(elm$core$Dict$RBNode_elm_builtin, elm$core$Dict$Black, k, v, l, r);
-		} else {
-			var x = _n0;
-			return x;
-		}
-	});
-var elm$core$Set$insert = F2(
-	function (key, _n0) {
-		var dict = _n0.a;
-		return elm$core$Set$Set_elm_builtin(
-			A3(elm$core$Dict$insert, key, _Utils_Tuple0, dict));
-	});
-var author$project$Main$dammyGameInitInfo = {
-	initSeedCount: 4,
-	pitCount: 3,
-	playerIDs: A2(
-		elm$core$Set$insert,
-		'bar',
-		A2(elm$core$Set$insert, 'foo', elm$core$Set$empty)),
-	timeLimitForSecond: 40
-};
+var author$project$Main$dammyGameInitInfo = {entryPlayerName: '', initSeedCount: 4, pitCount: 3, playerIDs: _List_Nil, timeLimitForSecond: 40};
 var elm$core$Basics$False = {$: 'False'};
 var elm$core$Basics$True = {$: 'True'};
 var elm$core$Result$isOk = function (result) {
@@ -5221,6 +5085,10 @@ var elm$core$Array$compressNodes = F2(
 				continue compressNodes;
 			}
 		}
+	});
+var elm$core$Basics$apR = F2(
+	function (x, f) {
+		return f(x);
 	});
 var elm$core$Basics$eq = _Utils_equal;
 var elm$core$Tuple$first = function (_n0) {
@@ -5551,6 +5419,8 @@ var elm$time$Time$Every = F2(
 	function (a, b) {
 		return {$: 'Every', a: a, b: b};
 	});
+var elm$core$Dict$RBEmpty_elm_builtin = {$: 'RBEmpty_elm_builtin'};
+var elm$core$Dict$empty = elm$core$Dict$RBEmpty_elm_builtin;
 var elm$core$Task$succeed = _Scheduler_succeed;
 var elm$time$Time$State = F2(
 	function (taggers, processes) {
@@ -5558,6 +5428,115 @@ var elm$time$Time$State = F2(
 	});
 var elm$time$Time$init = elm$core$Task$succeed(
 	A2(elm$time$Time$State, elm$core$Dict$empty, elm$core$Dict$empty));
+var elm$core$Dict$Black = {$: 'Black'};
+var elm$core$Dict$RBNode_elm_builtin = F5(
+	function (a, b, c, d, e) {
+		return {$: 'RBNode_elm_builtin', a: a, b: b, c: c, d: d, e: e};
+	});
+var elm$core$Basics$compare = _Utils_compare;
+var elm$core$Dict$Red = {$: 'Red'};
+var elm$core$Dict$balance = F5(
+	function (color, key, value, left, right) {
+		if ((right.$ === 'RBNode_elm_builtin') && (right.a.$ === 'Red')) {
+			var _n1 = right.a;
+			var rK = right.b;
+			var rV = right.c;
+			var rLeft = right.d;
+			var rRight = right.e;
+			if ((left.$ === 'RBNode_elm_builtin') && (left.a.$ === 'Red')) {
+				var _n3 = left.a;
+				var lK = left.b;
+				var lV = left.c;
+				var lLeft = left.d;
+				var lRight = left.e;
+				return A5(
+					elm$core$Dict$RBNode_elm_builtin,
+					elm$core$Dict$Red,
+					key,
+					value,
+					A5(elm$core$Dict$RBNode_elm_builtin, elm$core$Dict$Black, lK, lV, lLeft, lRight),
+					A5(elm$core$Dict$RBNode_elm_builtin, elm$core$Dict$Black, rK, rV, rLeft, rRight));
+			} else {
+				return A5(
+					elm$core$Dict$RBNode_elm_builtin,
+					color,
+					rK,
+					rV,
+					A5(elm$core$Dict$RBNode_elm_builtin, elm$core$Dict$Red, key, value, left, rLeft),
+					rRight);
+			}
+		} else {
+			if ((((left.$ === 'RBNode_elm_builtin') && (left.a.$ === 'Red')) && (left.d.$ === 'RBNode_elm_builtin')) && (left.d.a.$ === 'Red')) {
+				var _n5 = left.a;
+				var lK = left.b;
+				var lV = left.c;
+				var _n6 = left.d;
+				var _n7 = _n6.a;
+				var llK = _n6.b;
+				var llV = _n6.c;
+				var llLeft = _n6.d;
+				var llRight = _n6.e;
+				var lRight = left.e;
+				return A5(
+					elm$core$Dict$RBNode_elm_builtin,
+					elm$core$Dict$Red,
+					lK,
+					lV,
+					A5(elm$core$Dict$RBNode_elm_builtin, elm$core$Dict$Black, llK, llV, llLeft, llRight),
+					A5(elm$core$Dict$RBNode_elm_builtin, elm$core$Dict$Black, key, value, lRight, right));
+			} else {
+				return A5(elm$core$Dict$RBNode_elm_builtin, color, key, value, left, right);
+			}
+		}
+	});
+var elm$core$Dict$insertHelp = F3(
+	function (key, value, dict) {
+		if (dict.$ === 'RBEmpty_elm_builtin') {
+			return A5(elm$core$Dict$RBNode_elm_builtin, elm$core$Dict$Red, key, value, elm$core$Dict$RBEmpty_elm_builtin, elm$core$Dict$RBEmpty_elm_builtin);
+		} else {
+			var nColor = dict.a;
+			var nKey = dict.b;
+			var nValue = dict.c;
+			var nLeft = dict.d;
+			var nRight = dict.e;
+			var _n1 = A2(elm$core$Basics$compare, key, nKey);
+			switch (_n1.$) {
+				case 'LT':
+					return A5(
+						elm$core$Dict$balance,
+						nColor,
+						nKey,
+						nValue,
+						A3(elm$core$Dict$insertHelp, key, value, nLeft),
+						nRight);
+				case 'EQ':
+					return A5(elm$core$Dict$RBNode_elm_builtin, nColor, nKey, value, nLeft, nRight);
+				default:
+					return A5(
+						elm$core$Dict$balance,
+						nColor,
+						nKey,
+						nValue,
+						nLeft,
+						A3(elm$core$Dict$insertHelp, key, value, nRight));
+			}
+		}
+	});
+var elm$core$Dict$insert = F3(
+	function (key, value, dict) {
+		var _n0 = A3(elm$core$Dict$insertHelp, key, value, dict);
+		if ((_n0.$ === 'RBNode_elm_builtin') && (_n0.a.$ === 'Red')) {
+			var _n1 = _n0.a;
+			var k = _n0.b;
+			var v = _n0.c;
+			var l = _n0.d;
+			var r = _n0.e;
+			return A5(elm$core$Dict$RBNode_elm_builtin, elm$core$Dict$Black, k, v, l, r);
+		} else {
+			var x = _n0;
+			return x;
+		}
+	});
 var elm$core$Dict$foldl = F3(
 	function (func, acc, dict) {
 		foldl:
@@ -5891,6 +5870,9 @@ var elm$core$Task$sequence = function (tasks) {
 		elm$core$Task$map2(elm$core$List$cons),
 		elm$core$Task$succeed(_List_Nil),
 		tasks);
+};
+var elm$core$Basics$identity = function (x) {
+	return x;
 };
 var elm$time$Time$Posix = function (a) {
 	return {$: 'Posix', a: a};
@@ -6661,6 +6643,48 @@ var author$project$Main$doTimeRelatedEvents = function (gamePlayInfo) {
 			turnStartTime: gamePlayInfo.nowTime
 		}) : gamePlayInfo;
 };
+var elm$core$List$append = F2(
+	function (xs, ys) {
+		if (!ys.b) {
+			return xs;
+		} else {
+			return A3(elm$core$List$foldr, elm$core$List$cons, ys, xs);
+		}
+	});
+var author$project$Main$entryPlayer = F2(
+	function (playerID, gameInitInfo) {
+		return _Utils_update(
+			gameInitInfo,
+			{
+				entryPlayerName: '',
+				playerIDs: A2(
+					elm$core$List$append,
+					gameInitInfo.playerIDs,
+					_List_fromArray(
+						[playerID]))
+			});
+	});
+var elm_community$list_extra$List$Extra$remove = F2(
+	function (x, xs) {
+		if (!xs.b) {
+			return _List_Nil;
+		} else {
+			var y = xs.a;
+			var ys = xs.b;
+			return _Utils_eq(x, y) ? ys : A2(
+				elm$core$List$cons,
+				y,
+				A2(elm_community$list_extra$List$Extra$remove, x, ys));
+		}
+	});
+var author$project$Main$exitPlayer = F2(
+	function (exitPlayerID, gameInitInfo) {
+		return _Utils_update(
+			gameInitInfo,
+			{
+				playerIDs: A2(elm_community$list_extra$List$Extra$remove, exitPlayerID, gameInitInfo.playerIDs)
+			});
+	});
 var author$project$Main$defaultPlayerInfo = {pitSeedCounts: elm$core$Array$empty, playerID: author$project$Main$defaultPlayerID, storeSeedCount: -1};
 var author$project$Main$getPlayerInfo = F2(
 	function (playerID, playerInfoTable) {
@@ -6779,7 +6803,7 @@ var elm$core$List$repeat = F2(
 		return A3(elm$core$List$repeatHelp, _List_Nil, n, value);
 	});
 var author$project$Main$initGame = function (gameInitInfo) {
-	var playerIDs = elm$core$Set$toList(gameInitInfo.playerIDs);
+	var playerIDs = gameInitInfo.playerIDs;
 	var initPlayerInfo = function (playerID) {
 		return {
 			pitSeedCounts: elm$core$Array$fromList(
@@ -6914,15 +6938,12 @@ var author$project$Main$moveTurn = function (gamePlayInfo) {
 			});
 	}
 };
-var elm$core$Set$fromList = function (list) {
-	return A3(elm$core$List$foldl, elm$core$Set$insert, elm$core$Set$empty, list);
-};
 var author$project$Main$restartGame = function (gameEndInfo) {
 	return {
+		entryPlayerName: '',
 		initSeedCount: gameEndInfo.initSeedCount,
 		pitCount: gameEndInfo.pitCount,
-		playerIDs: elm$core$Set$fromList(
-			elm$core$Dict$keys(gameEndInfo.playerInfoTable)),
+		playerIDs: elm$core$Dict$keys(gameEndInfo.playerInfoTable),
 		timeLimitForSecond: gameEndInfo.timeLimitForSecond
 	};
 };
@@ -7928,28 +7949,51 @@ var elm_community$random_extra$Random$List$shuffle = function (list) {
 var author$project$Main$update = F2(
 	function (msg, model) {
 		var _n0 = _Utils_Tuple2(model, msg);
-		_n0$8:
+		_n0$11:
 		while (true) {
 			switch (_n0.a.$) {
 				case 'GameInit':
-					if (_n0.b.$ === 'StartGame') {
-						var gameInitInfo = _n0.a.a;
-						var _n1 = _n0.b;
-						return _Utils_Tuple2(
-							author$project$Main$GamePlay(
-								author$project$Main$initGame(gameInitInfo)),
-							elm$core$Platform$Cmd$batch(
-								_List_fromArray(
-									[
-										A2(elm$core$Task$perform, author$project$Main$GetTurnStartTime, elm$time$Time$now),
-										A2(
-										elm$random$Random$generate,
-										author$project$Main$InitOrderIDs,
-										elm_community$random_extra$Random$List$shuffle(
-											elm$core$Set$toList(gameInitInfo.playerIDs)))
-									])));
-					} else {
-						break _n0$8;
+					switch (_n0.b.$) {
+						case 'InputPlayerName':
+							var gameInitInfo = _n0.a.a;
+							var playerName = _n0.b.a;
+							return _Utils_Tuple2(
+								author$project$Main$GameInit(
+									_Utils_update(
+										gameInitInfo,
+										{entryPlayerName: playerName})),
+								elm$core$Platform$Cmd$none);
+						case 'EntryPlayer':
+							var gameInitInfo = _n0.a.a;
+							var playerID = _n0.b.a;
+							return _Utils_Tuple2(
+								author$project$Main$GameInit(
+									A2(author$project$Main$entryPlayer, playerID, gameInitInfo)),
+								elm$core$Platform$Cmd$none);
+						case 'ExitPlayer':
+							var gameInitInfo = _n0.a.a;
+							var playerID = _n0.b.a;
+							return _Utils_Tuple2(
+								author$project$Main$GameInit(
+									A2(author$project$Main$exitPlayer, playerID, gameInitInfo)),
+								elm$core$Platform$Cmd$none);
+						case 'StartGame':
+							var gameInitInfo = _n0.a.a;
+							var _n1 = _n0.b;
+							return _Utils_Tuple2(
+								author$project$Main$GamePlay(
+									author$project$Main$initGame(gameInitInfo)),
+								elm$core$Platform$Cmd$batch(
+									_List_fromArray(
+										[
+											A2(elm$core$Task$perform, author$project$Main$GetTurnStartTime, elm$time$Time$now),
+											A2(
+											elm$random$Random$generate,
+											author$project$Main$InitOrderIDs,
+											elm_community$random_extra$Random$List$shuffle(gameInitInfo.playerIDs))
+										])));
+						default:
+							break _n0$11;
 					}
 				case 'GamePlay':
 					switch (_n0.b.$) {
@@ -7999,7 +8043,7 @@ var author$project$Main$update = F2(
 									author$project$Main$sowingAtOnce(gamePlayInfo)),
 								elm$core$Platform$Cmd$none);
 						default:
-							break _n0$8;
+							break _n0$11;
 					}
 				default:
 					switch (_n0.b.$) {
@@ -8026,7 +8070,7 @@ var author$project$Main$update = F2(
 								author$project$Main$GameInit(author$project$Main$dammyGameInitInfo),
 								elm$core$Platform$Cmd$none);
 						default:
-							break _n0$8;
+							break _n0$11;
 					}
 			}
 		}
@@ -8034,7 +8078,6 @@ var author$project$Main$update = F2(
 	});
 var author$project$Main$InitGame = {$: 'InitGame'};
 var author$project$Main$RestartGame = {$: 'RestartGame'};
-var author$project$Main$StartGame = {$: 'StartGame'};
 var author$project$Main$SelectHoldPit = function (a) {
 	return {$: 'SelectHoldPit', a: a};
 };
@@ -8411,6 +8454,114 @@ var author$project$Main$viewEndBoard = function (gameEndInfo) {
 				},
 				A2(author$project$Main$getOrderedIDs, gameEndInfo.cliantID, gameEndInfo.nextOrderIDTable))));
 };
+var author$project$Main$EntryPlayer = function (a) {
+	return {$: 'EntryPlayer', a: a};
+};
+var author$project$Main$InputPlayerName = function (a) {
+	return {$: 'InputPlayerName', a: a};
+};
+var elm$html$Html$input = _VirtualDom_node('input');
+var elm$json$Json$Encode$string = _Json_wrap;
+var elm$html$Html$Attributes$stringProperty = F2(
+	function (key, string) {
+		return A2(
+			_VirtualDom_property,
+			key,
+			elm$json$Json$Encode$string(string));
+	});
+var elm$html$Html$Attributes$value = elm$html$Html$Attributes$stringProperty('value');
+var elm$html$Html$Events$alwaysStop = function (x) {
+	return _Utils_Tuple2(x, true);
+};
+var elm$virtual_dom$VirtualDom$MayStopPropagation = function (a) {
+	return {$: 'MayStopPropagation', a: a};
+};
+var elm$html$Html$Events$stopPropagationOn = F2(
+	function (event, decoder) {
+		return A2(
+			elm$virtual_dom$VirtualDom$on,
+			event,
+			elm$virtual_dom$VirtualDom$MayStopPropagation(decoder));
+	});
+var elm$json$Json$Decode$field = _Json_decodeField;
+var elm$json$Json$Decode$at = F2(
+	function (fields, decoder) {
+		return A3(elm$core$List$foldr, elm$json$Json$Decode$field, decoder, fields);
+	});
+var elm$json$Json$Decode$string = _Json_decodeString;
+var elm$html$Html$Events$targetValue = A2(
+	elm$json$Json$Decode$at,
+	_List_fromArray(
+		['target', 'value']),
+	elm$json$Json$Decode$string);
+var elm$html$Html$Events$onInput = function (tagger) {
+	return A2(
+		elm$html$Html$Events$stopPropagationOn,
+		'input',
+		A2(
+			elm$json$Json$Decode$map,
+			elm$html$Html$Events$alwaysStop,
+			A2(elm$json$Json$Decode$map, tagger, elm$html$Html$Events$targetValue)));
+};
+var author$project$Main$viewEntryPlayer = function (gameInitInfo) {
+	var playerNumber = elm$core$String$fromInt(
+		elm$core$List$length(gameInitInfo.playerIDs));
+	var entryPlayerID = gameInitInfo.entryPlayerName + ('@' + playerNumber);
+	return A2(
+		elm$html$Html$div,
+		_List_Nil,
+		_List_fromArray(
+			[
+				A2(
+				elm$html$Html$input,
+				_List_fromArray(
+					[
+						elm$html$Html$Attributes$value(gameInitInfo.entryPlayerName),
+						elm$html$Html$Events$onInput(author$project$Main$InputPlayerName)
+					]),
+				_List_Nil),
+				A2(
+				elm$html$Html$button,
+				_List_fromArray(
+					[
+						elm$html$Html$Events$onClick(
+						author$project$Main$EntryPlayer(entryPlayerID))
+					]),
+				_List_fromArray(
+					[
+						elm$html$Html$text('+')
+					]))
+			]));
+};
+var author$project$Main$ExitPlayer = function (a) {
+	return {$: 'ExitPlayer', a: a};
+};
+var author$project$Main$viewPlayerIDs = function (gameInitInfo) {
+	var viewPlayerID = function (playerID) {
+		return A2(
+			elm$html$Html$div,
+			_List_Nil,
+			_List_fromArray(
+				[
+					elm$html$Html$text(playerID),
+					A2(
+					elm$html$Html$button,
+					_List_fromArray(
+						[
+							elm$html$Html$Events$onClick(
+							author$project$Main$ExitPlayer(playerID))
+						]),
+					_List_fromArray(
+						[
+							elm$html$Html$text('-')
+						]))
+				]));
+	};
+	return A2(
+		elm$html$Html$div,
+		_List_Nil,
+		A2(elm$core$List$map, viewPlayerID, gameInitInfo.playerIDs));
+};
 var author$project$Main$viewReminingTimer = function (gamePlayInfo) {
 	var diffTime = A3(author$project$Main$getReminingTime, gamePlayInfo.turnStartTime, gamePlayInfo.nowTime, gamePlayInfo.timeLimitForSecond);
 	var reminingTime = (diffTime < 0) ? 0 : diffTime;
@@ -8454,6 +8605,19 @@ var author$project$Main$viewSowingButton = function (gamePlayInfo) {
 				elm$html$Html$text('sowing')
 			]));
 };
+var author$project$Main$StartGame = {$: 'StartGame'};
+var author$project$Main$viewStartButton = function (gameInitInfo) {
+	return (elm$core$List$length(gameInitInfo.playerIDs) < 2) ? A2(elm$html$Html$div, _List_Nil, _List_Nil) : A2(
+		elm$html$Html$button,
+		_List_fromArray(
+			[
+				elm$html$Html$Events$onClick(author$project$Main$StartGame)
+			]),
+		_List_fromArray(
+			[
+				elm$html$Html$text('game start')
+			]));
+};
 var author$project$Main$viewTurnPlayer = function (gamePlayInfo) {
 	return A2(
 		elm$html$Html$div,
@@ -8466,15 +8630,15 @@ var author$project$Main$viewTurnPlayer = function (gamePlayInfo) {
 var author$project$Main$view = function (model) {
 	switch (model.$) {
 		case 'GameInit':
+			var gameInitInfo = model.a;
 			return A2(
-				elm$html$Html$button,
+				elm$html$Html$div,
+				_List_Nil,
 				_List_fromArray(
 					[
-						elm$html$Html$Events$onClick(author$project$Main$StartGame)
-					]),
-				_List_fromArray(
-					[
-						elm$html$Html$text('game start')
+						author$project$Main$viewPlayerIDs(gameInitInfo),
+						author$project$Main$viewEntryPlayer(gameInitInfo),
+						author$project$Main$viewStartButton(gameInitInfo)
 					]));
 		case 'GameEnd':
 			var gameEndInfo = model.a;
@@ -8670,14 +8834,6 @@ var elm$browser$Debugger$Overlay$viewProblemType = function (_n0) {
 var elm$html$Html$a = _VirtualDom_node('a');
 var elm$html$Html$p = _VirtualDom_node('p');
 var elm$html$Html$ul = _VirtualDom_node('ul');
-var elm$json$Json$Encode$string = _Json_wrap;
-var elm$html$Html$Attributes$stringProperty = F2(
-	function (key, string) {
-		return A2(
-			_VirtualDom_property,
-			key,
-			elm$json$Json$Encode$string(string));
-	});
 var elm$html$Html$Attributes$href = function (url) {
 	return A2(
 		elm$html$Html$Attributes$stringProperty,
@@ -10357,9 +10513,7 @@ var elm$browser$Debugger$Metadata$Alias = F2(
 	function (args, tipe) {
 		return {args: args, tipe: tipe};
 	});
-var elm$json$Json$Decode$field = _Json_decodeField;
 var elm$json$Json$Decode$list = _Json_decodeList;
-var elm$json$Json$Decode$string = _Json_decodeString;
 var elm$browser$Debugger$Metadata$decodeAlias = A3(
 	elm$json$Json$Decode$map2,
 	elm$browser$Debugger$Metadata$Alias,
@@ -10495,14 +10649,6 @@ var elm$core$Dict$values = function (dict) {
 		_List_Nil,
 		dict);
 };
-var elm$core$List$append = F2(
-	function (xs, ys) {
-		if (!ys.b) {
-			return xs;
-		} else {
-			return A3(elm$core$List$foldr, elm$core$List$cons, ys, xs);
-		}
-	});
 var elm$core$List$concat = function (lists) {
 	return A3(elm$core$List$foldr, elm$core$List$append, _List_Nil, lists);
 };
@@ -11863,7 +12009,7 @@ var elm$browser$Browser$element = _Browser_element;
 var author$project$Main$main = elm$browser$Browser$element(
 	{init: author$project$Main$init, subscriptions: author$project$Main$subscriptions, update: author$project$Main$update, view: author$project$Main$view});
 _Platform_export({'Main':{'init':author$project$Main$main(
-	elm$json$Json$Decode$succeed(_Utils_Tuple0))({"versions":{"elm":"0.19.0"},"types":{"message":"Main.Msg","aliases":{"Main.PitNumber":{"args":[],"type":"Basics.Int"},"Main.PlayerID":{"args":[],"type":"String.String"}},"unions":{"Main.Msg":{"args":[],"tags":{"Tick":["Time.Posix"],"StartGame":[],"GetTurnStartTime":["Time.Posix"],"InitOrderIDs":["List.List Main.PlayerID"],"SelectHoldPit":["Main.PitNumber"],"Sowing":[],"RestartGame":[],"InitGame":[]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"List.List":{"args":["a"],"tags":{}},"String.String":{"args":[],"tags":{"String":[]}},"Time.Posix":{"args":[],"tags":{"Posix":["Basics.Int"]}}}}})}});}(this));
+	elm$json$Json$Decode$succeed(_Utils_Tuple0))({"versions":{"elm":"0.19.0"},"types":{"message":"Main.Msg","aliases":{"Main.PitNumber":{"args":[],"type":"Basics.Int"},"Main.PlayerID":{"args":[],"type":"String.String"}},"unions":{"Main.Msg":{"args":[],"tags":{"Tick":["Time.Posix"],"InputPlayerName":["String.String"],"EntryPlayer":["Main.PlayerID"],"ExitPlayer":["Main.PlayerID"],"StartGame":[],"GetTurnStartTime":["Time.Posix"],"InitOrderIDs":["List.List Main.PlayerID"],"SelectHoldPit":["Main.PitNumber"],"Sowing":[],"RestartGame":[],"InitGame":[]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"List.List":{"args":["a"],"tags":{}},"String.String":{"args":[],"tags":{"String":[]}},"Time.Posix":{"args":[],"tags":{"Posix":["Basics.Int"]}}}}})}});}(this));
 
 var app = Elm.Main.init({ node: document.getElementById("elm-f0111bc4e658d0f98db96260c16f7e49") });
 if (document.getElementById("elm-f0111bc4e658d0f98db96260c16f7e49"))
