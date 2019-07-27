@@ -5009,7 +5009,7 @@ var elm$core$Set$toList = function (_n0) {
 	var dict = _n0.a;
 	return elm$core$Dict$keys(dict);
 };
-var author$project$Main$dammyGameInitInfo = {entryPlayerName: '', initSeedCount: 4, pitCount: 3, playerIDs: _List_Nil, timeLimitForSecond: 40};
+var author$project$Main$dammyGameInitInfo = {entryPlayerName: '', initSeedCount: 4, pitCount: 6, playerIDs: _List_Nil, timeLimitForSecond: 40};
 var elm$core$Basics$False = {$: 'False'};
 var elm$core$Basics$True = {$: 'True'};
 var elm$core$Result$isOk = function (result) {
@@ -7949,11 +7949,29 @@ var elm_community$random_extra$Random$List$shuffle = function (list) {
 var author$project$Main$update = F2(
 	function (msg, model) {
 		var _n0 = _Utils_Tuple2(model, msg);
-		_n0$11:
+		_n0$13:
 		while (true) {
 			switch (_n0.a.$) {
 				case 'GameInit':
 					switch (_n0.b.$) {
+						case 'SelectPitCount':
+							var gameInitInfo = _n0.a.a;
+							var n = _n0.b.a;
+							return _Utils_Tuple2(
+								author$project$Main$GameInit(
+									_Utils_update(
+										gameInitInfo,
+										{pitCount: n})),
+								elm$core$Platform$Cmd$none);
+						case 'SelectSeedCount':
+							var gameInitInfo = _n0.a.a;
+							var n = _n0.b.a;
+							return _Utils_Tuple2(
+								author$project$Main$GameInit(
+									_Utils_update(
+										gameInitInfo,
+										{initSeedCount: n})),
+								elm$core$Platform$Cmd$none);
 						case 'InputPlayerName':
 							var gameInitInfo = _n0.a.a;
 							var playerName = _n0.b.a;
@@ -7993,7 +8011,7 @@ var author$project$Main$update = F2(
 											elm_community$random_extra$Random$List$shuffle(gameInitInfo.playerIDs))
 										])));
 						default:
-							break _n0$11;
+							break _n0$13;
 					}
 				case 'GamePlay':
 					switch (_n0.b.$) {
@@ -8043,7 +8061,7 @@ var author$project$Main$update = F2(
 									author$project$Main$sowingAtOnce(gamePlayInfo)),
 								elm$core$Platform$Cmd$none);
 						default:
-							break _n0$11;
+							break _n0$13;
 					}
 				default:
 					switch (_n0.b.$) {
@@ -8070,7 +8088,7 @@ var author$project$Main$update = F2(
 								author$project$Main$GameInit(author$project$Main$dammyGameInitInfo),
 								elm$core$Platform$Cmd$none);
 						default:
-							break _n0$11;
+							break _n0$13;
 					}
 			}
 		}
@@ -8469,6 +8487,7 @@ var elm$html$Html$Attributes$stringProperty = F2(
 			key,
 			elm$json$Json$Encode$string(string));
 	});
+var elm$html$Html$Attributes$placeholder = elm$html$Html$Attributes$stringProperty('placeholder');
 var elm$html$Html$Attributes$value = elm$html$Html$Attributes$stringProperty('value');
 var elm$html$Html$Events$alwaysStop = function (x) {
 	return _Utils_Tuple2(x, true);
@@ -8516,6 +8535,7 @@ var author$project$Main$viewEntryPlayer = function (gameInitInfo) {
 				elm$html$Html$input,
 				_List_fromArray(
 					[
+						elm$html$Html$Attributes$placeholder('put entry player name'),
 						elm$html$Html$Attributes$value(gameInitInfo.entryPlayerName),
 						elm$html$Html$Events$onInput(author$project$Main$InputPlayerName)
 					]),
@@ -8531,6 +8551,80 @@ var author$project$Main$viewEntryPlayer = function (gameInitInfo) {
 					[
 						elm$html$Html$text('+')
 					]))
+			]));
+};
+var author$project$Main$SelectSeedCount = function (a) {
+	return {$: 'SelectSeedCount', a: a};
+};
+var elm$core$String$toInt = _String_toInt;
+var elm$html$Html$option = _VirtualDom_node('option');
+var elm$html$Html$select = _VirtualDom_node('select');
+var elm$json$Json$Encode$bool = _Json_wrap;
+var elm$html$Html$Attributes$boolProperty = F2(
+	function (key, bool) {
+		return A2(
+			_VirtualDom_property,
+			key,
+			elm$json$Json$Encode$bool(bool));
+	});
+var elm$html$Html$Attributes$selected = elm$html$Html$Attributes$boolProperty('selected');
+var author$project$Main$viewNumberSelect = F4(
+	function (lower, upper, selectedN, msgForNumberUpdate) {
+		var validateNumberString = function (nStr) {
+			return A2(
+				elm$core$Maybe$withDefault,
+				0,
+				elm$core$String$toInt(nStr));
+		};
+		var numberToOption = function (n) {
+			var item = elm$core$String$fromInt(n);
+			return A2(
+				elm$html$Html$option,
+				_List_fromArray(
+					[
+						elm$html$Html$Attributes$value(item),
+						elm$html$Html$Attributes$selected(
+						_Utils_eq(n, selectedN))
+					]),
+				_List_fromArray(
+					[
+						elm$html$Html$text(item)
+					]));
+		};
+		var options = A2(
+			elm$core$List$map,
+			numberToOption,
+			A2(elm$core$List$range, lower, upper - 1));
+		return A2(
+			elm$html$Html$select,
+			_List_fromArray(
+				[
+					elm$html$Html$Events$onInput(
+					A2(elm$core$Basics$composeR, validateNumberString, msgForNumberUpdate))
+				]),
+			options);
+	});
+var author$project$Main$viewInitSeedCount = function (gameInitInfo) {
+	return A2(
+		elm$html$Html$div,
+		_List_Nil,
+		_List_fromArray(
+			[
+				elm$html$Html$text('seed count '),
+				A4(author$project$Main$viewNumberSelect, 3, 6 + 1, gameInitInfo.initSeedCount, author$project$Main$SelectSeedCount)
+			]));
+};
+var author$project$Main$SelectPitCount = function (a) {
+	return {$: 'SelectPitCount', a: a};
+};
+var author$project$Main$viewPitCount = function (gameInitInfo) {
+	return A2(
+		elm$html$Html$div,
+		_List_Nil,
+		_List_fromArray(
+			[
+				elm$html$Html$text('pit count '),
+				A4(author$project$Main$viewNumberSelect, 3, 12 + 1, gameInitInfo.pitCount, author$project$Main$SelectPitCount)
 			]));
 };
 var author$project$Main$ExitPlayer = function (a) {
@@ -8575,14 +8669,6 @@ var author$project$Main$viewReminingTimer = function (gamePlayInfo) {
 			]));
 };
 var author$project$Main$Sowing = {$: 'Sowing'};
-var elm$json$Json$Encode$bool = _Json_wrap;
-var elm$html$Html$Attributes$boolProperty = F2(
-	function (key, bool) {
-		return A2(
-			_VirtualDom_property,
-			key,
-			elm$json$Json$Encode$bool(bool));
-	});
 var elm$html$Html$Attributes$hidden = elm$html$Html$Attributes$boolProperty('hidden');
 var author$project$Main$viewSowingButton = function (gamePlayInfo) {
 	var isHidden = function () {
@@ -8636,6 +8722,9 @@ var author$project$Main$view = function (model) {
 				_List_Nil,
 				_List_fromArray(
 					[
+						elm$html$Html$text('Game Setting'),
+						author$project$Main$viewPitCount(gameInitInfo),
+						author$project$Main$viewInitSeedCount(gameInitInfo),
 						author$project$Main$viewPlayerIDs(gameInitInfo),
 						author$project$Main$viewEntryPlayer(gameInitInfo),
 						author$project$Main$viewStartButton(gameInitInfo)
@@ -8647,6 +8736,7 @@ var author$project$Main$view = function (model) {
 				_List_Nil,
 				_List_fromArray(
 					[
+						elm$html$Html$text('Game End'),
 						elm$html$Html$text('Game! Winner : ' + gameEndInfo.winnerID),
 						author$project$Main$viewEndBoard(gameEndInfo),
 						A2(
@@ -8677,6 +8767,7 @@ var author$project$Main$view = function (model) {
 				_List_Nil,
 				_List_fromArray(
 					[
+						elm$html$Html$text('Game Playing'),
 						author$project$Main$viewTurnPlayer(gamePlayInfo),
 						author$project$Main$viewReminingTimer(gamePlayInfo),
 						author$project$Main$viewBoard(gamePlayInfo),
@@ -11898,7 +11989,6 @@ var elm$core$String$indexes = _String_indexes;
 var elm$core$String$isEmpty = function (string) {
 	return string === '';
 };
-var elm$core$String$toInt = _String_toInt;
 var elm$url$Url$Url = F6(
 	function (protocol, host, port_, path, query, fragment) {
 		return {fragment: fragment, host: host, path: path, port_: port_, protocol: protocol, query: query};
@@ -12009,7 +12099,7 @@ var elm$browser$Browser$element = _Browser_element;
 var author$project$Main$main = elm$browser$Browser$element(
 	{init: author$project$Main$init, subscriptions: author$project$Main$subscriptions, update: author$project$Main$update, view: author$project$Main$view});
 _Platform_export({'Main':{'init':author$project$Main$main(
-	elm$json$Json$Decode$succeed(_Utils_Tuple0))({"versions":{"elm":"0.19.0"},"types":{"message":"Main.Msg","aliases":{"Main.PitNumber":{"args":[],"type":"Basics.Int"},"Main.PlayerID":{"args":[],"type":"String.String"}},"unions":{"Main.Msg":{"args":[],"tags":{"Tick":["Time.Posix"],"InputPlayerName":["String.String"],"EntryPlayer":["Main.PlayerID"],"ExitPlayer":["Main.PlayerID"],"StartGame":[],"GetTurnStartTime":["Time.Posix"],"InitOrderIDs":["List.List Main.PlayerID"],"SelectHoldPit":["Main.PitNumber"],"Sowing":[],"RestartGame":[],"InitGame":[]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"List.List":{"args":["a"],"tags":{}},"String.String":{"args":[],"tags":{"String":[]}},"Time.Posix":{"args":[],"tags":{"Posix":["Basics.Int"]}}}}})}});}(this));
+	elm$json$Json$Decode$succeed(_Utils_Tuple0))({"versions":{"elm":"0.19.0"},"types":{"message":"Main.Msg","aliases":{"Main.PitNumber":{"args":[],"type":"Basics.Int"},"Main.PlayerID":{"args":[],"type":"String.String"}},"unions":{"Main.Msg":{"args":[],"tags":{"Tick":["Time.Posix"],"SelectPitCount":["Basics.Int"],"SelectSeedCount":["Basics.Int"],"InputPlayerName":["String.String"],"EntryPlayer":["Main.PlayerID"],"ExitPlayer":["Main.PlayerID"],"StartGame":[],"GetTurnStartTime":["Time.Posix"],"InitOrderIDs":["List.List Main.PlayerID"],"SelectHoldPit":["Main.PitNumber"],"Sowing":[],"RestartGame":[],"InitGame":[]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"List.List":{"args":["a"],"tags":{}},"String.String":{"args":[],"tags":{"String":[]}},"Time.Posix":{"args":[],"tags":{"Posix":["Basics.Int"]}}}}})}});}(this));
 
 var app = Elm.Main.init({ node: document.getElementById("elm-f0111bc4e658d0f98db96260c16f7e49") });
 if (document.getElementById("elm-f0111bc4e658d0f98db96260c16f7e49"))

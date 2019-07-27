@@ -174,7 +174,7 @@ dammyGameInitInfo : GameInitInfo
 dammyGameInitInfo =
     { playerIDs = []
     , entryPlayerName = ""
-    , pitCount = 3
+    , pitCount = 6
     , initSeedCount = 4
     , timeLimitForSecond = 40
     }
@@ -191,6 +191,8 @@ init () =
 
 type Msg
     = Tick Time.Posix
+    | SelectPitCount Int
+    | SelectSeedCount Int
     | InputPlayerName String
     | EntryPlayer PlayerID
     | ExitPlayer PlayerID
@@ -206,6 +208,12 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case ( model, msg ) of
+        ( GameInit gameInitInfo, SelectPitCount n ) ->
+            ( { gameInitInfo | pitCount = n } |> GameInit, Cmd.none )
+
+        ( GameInit gameInitInfo, SelectSeedCount n ) ->
+            ( { gameInitInfo | initSeedCount = n } |> GameInit, Cmd.none )
+
         ( GameInit gameInitInfo, InputPlayerName playerName ) ->
             ( { gameInitInfo | entryPlayerName = playerName } |> GameInit, Cmd.none )
 
@@ -596,11 +604,11 @@ subscriptions _ =
 -- VIEW
 
 
-viewNumberSelect : Int -> Int -> Int -> Html Msg
-viewNumberSelect lower upper selectedN =
+viewNumberSelect : Int -> Int -> Int -> (Int -> Msg) -> Html Msg
+viewNumberSelect lower upper selectedN msgForNumberUpdate =
     let
-        nToOption : Int -> Html Msg
-        nToOption n =
+        numberToOption : Int -> Html Msg
+        numberToOption n =
             let
                 item =
                     String.fromInt n
@@ -609,9 +617,23 @@ viewNumberSelect lower upper selectedN =
 
         options =
             List.range lower (upper - 1)
-                |> List.map nToOption
+                |> List.map numberToOption
+
+        validateNumberString : String -> Int
+        validateNumberString nStr =
+            nStr |> String.toInt |> Maybe.withDefault 0
     in
-    select [] options
+    select [ onInput (validateNumberString >> msgForNumberUpdate) ] options
+
+
+viewPitCount : GameInitInfo -> Html Msg
+viewPitCount gameInitInfo =
+    div [] [ text "pit count ", viewNumberSelect 3 (12 + 1) gameInitInfo.pitCount SelectPitCount ]
+
+
+viewInitSeedCount : GameInitInfo -> Html Msg
+viewInitSeedCount gameInitInfo =
+    div [] [ text "seed count ", viewNumberSelect 3 (6 + 1) gameInitInfo.initSeedCount SelectSeedCount ]
 
 
 viewPlayerIDs : GameInitInfo -> Html Msg
@@ -636,7 +658,7 @@ viewEntryPlayer gameInitInfo =
             gameInitInfo.entryPlayerName ++ "@" ++ playerNumber
     in
     div []
-        [ input [ value gameInitInfo.entryPlayerName, onInput InputPlayerName ] []
+        [ input [ placeholder "put entry player name", value gameInitInfo.entryPlayerName, onInput InputPlayerName ] []
         , button [ onClick (EntryPlayer entryPlayerID) ] [ text "+" ]
         ]
 
@@ -782,14 +804,18 @@ view model =
         GameInit gameInitInfo ->
             div []
                 -- TODO ゲームの初期設定用ボタンの追加
-                [ viewPlayerIDs gameInitInfo
+                [ text "Game Setting"
+                , viewPitCount gameInitInfo
+                , viewInitSeedCount gameInitInfo
+                , viewPlayerIDs gameInitInfo
                 , viewEntryPlayer gameInitInfo
                 , viewStartButton gameInitInfo
                 ]
 
         GameEnd gameEndInfo ->
             div []
-                [ text ("Game! Winner : " ++ gameEndInfo.winnerID)
+                [ text "Game End"
+                , text ("Game! Winner : " ++ gameEndInfo.winnerID)
                 , viewEndBoard gameEndInfo
                 , button [ onClick RestartGame ] [ text "restart game!" ]
                 , button [ onClick InitGame ] [ text "init game!" ]
@@ -797,7 +823,8 @@ view model =
 
         GamePlay gamePlayInfo ->
             div []
-                [ viewTurnPlayer gamePlayInfo
+                [ text "Game Playing"
+                , viewTurnPlayer gamePlayInfo
                 , viewReminingTimer gamePlayInfo
                 , viewBoard gamePlayInfo
                 , viewSowingButton gamePlayInfo
