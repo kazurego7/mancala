@@ -596,6 +596,24 @@ subscriptions _ =
 -- VIEW
 
 
+viewNumberSelect : Int -> Int -> Int -> Html Msg
+viewNumberSelect lower upper selectedN =
+    let
+        nToOption : Int -> Html Msg
+        nToOption n =
+            let
+                item =
+                    String.fromInt n
+            in
+            option [ value item, selected (n == selectedN) ] [ text item ]
+
+        options =
+            List.range lower (upper - 1)
+                |> List.map nToOption
+    in
+    select [] options
+
+
 viewPlayerIDs : GameInitInfo -> Html Msg
 viewPlayerIDs gameInitInfo =
     let
