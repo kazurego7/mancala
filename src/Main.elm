@@ -193,6 +193,7 @@ type Msg
     = Tick Time.Posix
     | SelectPitCount Int
     | SelectSeedCount Int
+    | SelectTimeLimit Int
     | InputPlayerName String
     | EntryPlayer PlayerID
     | ExitPlayer PlayerID
@@ -213,6 +214,9 @@ update msg model =
 
         ( GameInit gameInitInfo, SelectSeedCount n ) ->
             ( { gameInitInfo | initSeedCount = n } |> GameInit, Cmd.none )
+
+        ( GameInit gameInitInfo, SelectTimeLimit t ) ->
+            ( { gameInitInfo | timeLimitForSecond = t } |> GameInit, Cmd.none )
 
         ( GameInit gameInitInfo, InputPlayerName playerName ) ->
             ( { gameInitInfo | entryPlayerName = playerName } |> GameInit, Cmd.none )
@@ -604,38 +608,54 @@ subscriptions _ =
 -- VIEW
 
 
-viewNumberSelect : List Int -> Int -> (Int -> Msg) -> Html Msg
-viewNumberSelect nums selectedN msgForNumberUpdate =
-    let
-        numberToOption : Int -> Html Msg
-        numberToOption n =
-            let
-                item =
-                    String.fromInt n
-            in
-            option [ value item, selected (n == selectedN) ] [ text item ]
+validateNumberString : String -> Int
+validateNumberString nStr =
+    nStr |> String.toInt |> Maybe.withDefault 0
 
-        options =
-            nums
-                |> List.map numberToOption
 
-        validateNumberString : String -> Int
-        validateNumberString nStr =
-            nStr |> String.toInt |> Maybe.withDefault 0
-    in
-    select [ onInput (validateNumberString >> msgForNumberUpdate) ] options
+viewNumberOption : Int -> Int -> Html Msg
+viewNumberOption selectedN n =
+    option [ value (String.fromInt n), selected (n == selectedN) ] [ text (String.fromInt n) ]
 
 
 viewPitCount : GameInitInfo -> Html Msg
 viewPitCount gameInitInfo =
-    div [] [ text "pit count ", viewNumberSelect (List.range 3 12) gameInitInfo.pitCount SelectPitCount ]
+    let
+        options =
+            List.range 3 12
+                |> List.map (viewNumberOption gameInitInfo.pitCount)
+    in
+    div []
+        [ text "pit count "
+        , select [ onInput (validateNumberString >> SelectPitCount) ] options
+        ]
 
 
 viewInitSeedCount : GameInitInfo -> Html Msg
 viewInitSeedCount gameInitInfo =
-    div [] [ text "seed count ", viewNumberSelect (List.range 3 6) gameInitInfo.initSeedCount SelectSeedCount ]
+    let
+        options =
+            List.range 3 6
+                |> List.map (viewNumberOption gameInitInfo.initSeedCount)
+    in
+    div []
+        [ text "seed count "
+        , select [ onInput (validateNumberString >> SelectSeedCount) ] options
+        ]
 
 
+viewTimeLimit : GameInitInfo -> Html Msg
+viewTimeLimit gameInitInfo =
+    let
+        options =
+            List.range 1 12
+                |> List.map (\n -> n * 10)
+                |> List.map (viewNumberOption gameInitInfo.timeLimitForSecond)
+    in
+    div []
+        [ text "limit time "
+        , select [ onInput (validateNumberString >> SelectTimeLimit) ] options
+        ]
 
 
 viewPlayerIDs : GameInitInfo -> Html Msg
@@ -809,6 +829,7 @@ view model =
                 [ text "Game Setting"
                 , viewPitCount gameInitInfo
                 , viewInitSeedCount gameInitInfo
+                , viewTimeLimit gameInitInfo
                 , viewPlayerIDs gameInitInfo
                 , viewEntryPlayer gameInitInfo
                 , viewStartButton gameInitInfo
