@@ -604,8 +604,8 @@ subscriptions _ =
 -- VIEW
 
 
-viewNumberSelect : Int -> Int -> Int -> (Int -> Msg) -> Html Msg
-viewNumberSelect lower upper selectedN msgForNumberUpdate =
+viewNumberSelect : List Int -> Int -> (Int -> Msg) -> Html Msg
+viewNumberSelect nums selectedN msgForNumberUpdate =
     let
         numberToOption : Int -> Html Msg
         numberToOption n =
@@ -616,7 +616,7 @@ viewNumberSelect lower upper selectedN msgForNumberUpdate =
             option [ value item, selected (n == selectedN) ] [ text item ]
 
         options =
-            List.range lower (upper - 1)
+            nums
                 |> List.map numberToOption
 
         validateNumberString : String -> Int
@@ -628,12 +628,14 @@ viewNumberSelect lower upper selectedN msgForNumberUpdate =
 
 viewPitCount : GameInitInfo -> Html Msg
 viewPitCount gameInitInfo =
-    div [] [ text "pit count ", viewNumberSelect 3 (12 + 1) gameInitInfo.pitCount SelectPitCount ]
+    div [] [ text "pit count ", viewNumberSelect (List.range 3 12) gameInitInfo.pitCount SelectPitCount ]
 
 
 viewInitSeedCount : GameInitInfo -> Html Msg
 viewInitSeedCount gameInitInfo =
-    div [] [ text "seed count ", viewNumberSelect 3 (6 + 1) gameInitInfo.initSeedCount SelectSeedCount ]
+    div [] [ text "seed count ", viewNumberSelect (List.range 3 6) gameInitInfo.initSeedCount SelectSeedCount ]
+
+
 
 
 viewPlayerIDs : GameInitInfo -> Html Msg
