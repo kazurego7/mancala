@@ -1,0 +1,27 @@
+{
+  "name": "mancala",
+  "version": "1.0.0",
+  "description": "ゆるくマンカラつくるか",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kazurego7/mancala.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/kazurego7/mancala/issues"
+  },
+  "homepage": "https://github.com/kazurego7/mancala#readme",
+  "dependencies": {},
+  "devDependencies": {
+    "elm": "^0.19.1-3",
+    "elm-analyse": "^0.16.5",
+    "elm-format": "^0.8.2",
+    "elm-live": "^4.0.1",
+    "elm-test": "^0.19.1-revision2"
+  }
+}
